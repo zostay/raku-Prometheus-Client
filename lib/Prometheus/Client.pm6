@@ -21,6 +21,7 @@ unit module Prometheus::Client;
     sub MAIN() {
         use Cro::HTTP::Router;
         use Cro::HTTP::Server;
+        use Prometheus::Client::Exposition :render;
 
         my $application = route {
             get -> 'process', $t is timed-metric($m, 'request_processing_seconds') {
@@ -29,7 +30,7 @@ unit module Prometheus::Client;
             }
 
             get -> 'metrics' {
-                content 'text/plain', $m.render;
+                content 'text/plain', render-metrics($m);
             }
         }
 
