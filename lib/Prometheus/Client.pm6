@@ -2,6 +2,78 @@ use v6;
 
 unit module Prometheus::Client;
 
+use Prometheus::Client::Metrics;
+
+class CollectorRegistry does Collector {
+    has SetHash $!collectors;
+
+    method register(Collector:D $collector) {
+        $!collectors{ $collector }++
+    }
+
+    method unregister(Collector:D $collector) {
+        $!collectors{ $collector }:delete;
+    }
+
+    method describe(--> Seq:D) {
+        gather for $!collectors.keys {
+            .take for .describe;
+        }
+    }
+
+    method collect(--> Seq:D) {
+        gather for $!collectors.keys {
+            .take for .collect;
+        }
+    }
+}
+
+sub METRICS(&block) is export(:metrics) {
+    my $*METRICS = CollectorRegistry.new;
+    block();
+    $*METRICS;
+}
+
+my sub _register-metric($type, :$registry, |c) {
+    my $r = $*METRICS // $registry;
+
+    die "The registry parameter is required." without $r;
+
+    $r.register: Prometheus::Client::Metrics::Factory.build($type, |c);
+}
+
+our proto counter(|) is export(:metrics) { * }
+multi counter(Str:D $name, Str:D $documentation) {
+    counter(:$name, :$documentation)
+}
+multi counter(|c) {
+    _register-metric('counter', |c);
+}
+
+our proto gauge(|) is export(:metrics) { * }
+multi gauge(Str:D $name, Str:D $documentation) {
+    gauge(:$name, :$documentation)
+}
+multi gauge(|c) {
+    _register-metric('gauge', |c);
+}
+
+our proto summary(|) is export(:metrics) { * }
+multi summary(Str:D $name, Str:D $documentation) {
+    summary(:$name, :$documentation)
+}
+multi summary(|c) {
+    _register-metric('summery', |c);
+}
+
+our proto histogram(|) is export(:metrics) { * }
+multi histogram(Str:D $name, Str:D $documentation) {
+    histogram(:$name, :$documentation)
+}
+multi histogram(|c) {
+    _register-metric('histogram', |c);
+}
+
 =begin pod
 
 =head1 SYNOPSIS
@@ -9,7 +81,7 @@ unit module Prometheus::Client;
     use v6;
     use Prometheus::Client :metrics;
 
-    my $m = metrics {
+    my $m = METRICS {
         summary 'request_processing_seconds', 'Time spent processing requests';
     }
 
