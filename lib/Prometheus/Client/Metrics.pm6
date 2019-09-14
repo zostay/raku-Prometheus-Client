@@ -21,7 +21,7 @@ subset ReservedMetricLabelName of Str where *.starts-with('__');
 class Sample {
     has MetricName $.name is required;
     has MetricLabel @.labels;
-    has Numeric $.value;
+    has Real $.value;
     has Instant $.timestamp;
 }
 
@@ -64,10 +64,10 @@ role Descriptor {
 }
 
 role Base does Collector does Descriptor {
-    has Numeric $.value = 0;
+    has Real $.value = 0;
     has Instant $.created = now;
 
-    method created-posix(--> Numeric:D) { $.created.to-posix.[0] }
+    method created-posix(--> Real:D) { $.created.to-posix.[0] }
 
     method describe(--> Seq:D) {
         gather { take self.get-metric }
@@ -92,7 +92,7 @@ role Base does Collector does Descriptor {
 class Counter does Base {
     method type(--> Str:D) { 'counter' }
 
-    method inc(Numeric $amount = 1 where * >= 0) { $!value += $amount }
+    method inc(Real $amount = 1 where * >= 0) { $!value += $amount }
 
     method sample(--> Seq:D) {
         gather {
@@ -104,13 +104,13 @@ class Counter does Base {
 
 class Gauge does Base {
     has &!function;
-    has Numeric $.value is rw = 0;
+    has Real $.value is rw = 0;
 
     method type(--> Str:D) { 'gauge' }
 
-    method inc(Numeric $amount = 1) { $!value += $amount }
-    method dec(Numeric $amount = 1) { $!value -= $amount }
-    method set(Numeric $amount is required) { $!value = $amount }
+    method inc(Real $amount = 1) { $!value += $amount }
+    method dec(Real $amount = 1) { $!value -= $amount }
+    method set(Real $amount is required) { $!value = $amount }
     method set-to-current-time() { $!value = $time.to-posix.[0] }
     method set-duration(Duration $duration) { $!value = $duration }
     method set-function(&f) { &!function = &f }
@@ -142,11 +142,11 @@ multi trait_mod:<is>(Routine $r, Gauge :$tracked-in-progress!) {
 
 class Summary does Base {
     has Int $.count = 0;
-    has Numeric $.sum = 0;
+    has Real $.sum = 0;
 
     method type(--> Str:D) { 'summary' }
 
-    method observe(Numeric:D $amount) {
+    method observe(Real:D $amount) {
         $!count++;
         $!sum += $amount;
     }
@@ -170,9 +170,9 @@ multi trait_mod:<is>(Routine $r, Summary :$timed!) {
 class Histogram does Base {
     constant DEFAULT-BUCKET-BOUNDS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, Inf);
 
-    has Numeric @.bucket-bounds = DEFAULT-BUCKET-BOUNDS;
+    has Real @.bucket-bounds = DEFAULT-BUCKET-BOUNDS;
     has Int @.buckets;
-    has Numeric $.sum = 0;
+    has Real $.sum = 0;
 
     submethod TWEAK {
         die 'bucket-bounds are not in sorted order'
@@ -192,7 +192,7 @@ class Histogram does Base {
 
     method type(--> Str:D) { 'histogram' }
 
-    method observe(Numeric $amount) {
+    method observe(Real $amount) {
         $!sum += $amount;
         @!buckets[ @!bucket-bounds.first($amount <= *, :k) ]++;
     }
