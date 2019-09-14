@@ -7,25 +7,25 @@ enum MetricType <
     GaugeHistogram Untyped Info StateSet
 >;
 
-subset MetricName of Str where /^
+subset MetricName is export(:metrics) of Str where /^
     <[a..z A..Z _ :]>        # start with a letter or _ or :
     <[a..z A..Z 0..9 _ :]>*  # continue with letter or digit or _ or :
 $/;
-subset MetricLabelName of Str where /^
+subset MetricLabelName is export(:metrics) of Str where /^
     <[a..z A..Z _]>       # start with letter or _
     <[a..z A..Z 0..9 _]>* # contineu with letter or digit or _
 $/
-subset MetricLabel of Pair where *.keys.all ~~ MetricLabelName;
+subset MetricLabel is export(:metrics) of Pair where *.keys.all ~~ MetricLabelName;
 subset ReservedMetricLabelName of Str where *.starts-with('__');
 
-class Sample {
+class Sample is export(:mtrics) {
     has MetricName $.name is required;
     has MetricLabel @.labels;
     has Real $.value;
     has Instant $.timestamp;
 }
 
-class Metric {
+class Metric is export(:metrics) {
     has MetricName $.name is required;
     has Str $.documentation is required;
     has MetricType $.type;
@@ -36,7 +36,7 @@ class Metric {
     }
 }
 
-role Collector {
+role Collector is export(:collectors) {
     method describe(--> Seq:D) { ().Seq }
     method collect(--> Seq:D) { ... }
 }
@@ -89,7 +89,7 @@ role Base does Collector does Descriptor {
     method samples(--> Seq:D) { ... }
 }
 
-class Counter does Base {
+class Counter is export(:collectors) does Base {
     method type(--> Str:D) { 'counter' }
 
     method inc(Real $amount = 1 where * >= 0) { $!value += $amount }
@@ -102,7 +102,7 @@ class Counter does Base {
     }
 }
 
-class Gauge does Base {
+class Gauge is export(:collectors) does Base {
     has &!function;
     has Real $.value is rw = 0;
 
@@ -140,7 +140,7 @@ multi trait_mod:<is>(Routine $r, Gauge :$tracked-in-progress!) {
     }
 }
 
-class Summary does Base {
+class Summary is export(:collectors) does Base {
     has Int $.count = 0;
     has Real $.sum = 0;
 
@@ -167,7 +167,7 @@ multi trait_mod:<is>(Routine $r, Summary :$timed!) {
     }
 }
 
-class Histogram does Base {
+class Histogram is export(:collectors) does Base {
     constant DEFAULT-BUCKET-BOUNDS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, Inf);
 
     has Real @.bucket-bounds = DEFAULT-BUCKET-BOUNDS;
@@ -218,7 +218,7 @@ multi trait_mod:<is>(Routine $r, Histogram :$timed!) {
     }
 }
 
-class Info does Base {
+class Info is export(:collectors) does Base {
     has MetricLabel @.info is rw;
 
     method type(--> Str:D) { 'info' }
@@ -230,7 +230,7 @@ class Info does Base {
     }
 }
 
-class StateSet does Base {
+class StateSet is export(:collectors) does Base {
     has @.states is required;
     has Int $!state = 0;
 
@@ -256,7 +256,7 @@ class Factory {
     multi method build('stateset', |c) { StateSet.new(|c) }
 }
 
-class Group does Collector does Descriptor {
+class Group is export(:collectors) does Collector does Descriptor {
     has MetricLabelName @.label-names;
 
     has %!metrics;

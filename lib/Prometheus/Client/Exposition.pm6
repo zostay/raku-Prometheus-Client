@@ -2,11 +2,7 @@ use v6;
 
 unit class Prometheus::Client::Exposition;
 
-use Prometheus::Client::Metrics;
-
-constant Collector := Prometheus::Client::Metrics::Collector;
-constant Sample := Prometheus::Client::Metrics::Sample;
-constant Metric := Prometheus::Client::Metrics::Metric;
+use Prometheus::Client::Metrics :metrics, :collectors;
 
 has Collector:D $collector;
 
