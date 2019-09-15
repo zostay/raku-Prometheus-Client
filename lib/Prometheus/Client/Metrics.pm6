@@ -124,22 +124,6 @@ class Gauge is export(:collectors) does Base {
     }
 }
 
-multi trait_mod:<is>(Routine $r, Gauge :$timed!) {
-    $r.wrap: sub (|c) {
-        my $ will enter { $_ = now } will leave { $timed.set-duration(now - $_) };
-        callsame;
-    }
-}
-
-multi trait_mod:<is>(Routine $r, Gauge :$tracked-in-progress!) {
-    $r.wrap: sub (|c) {
-        ENTER $track-inprogress.increment;
-        LEAVE $track-inprogress.decrement;
-
-        callsame;
-    }
-}
-
 class Summary is export(:collectors) does Base {
     has Int $.count = 0;
     has Real $.sum = 0;
@@ -157,13 +141,6 @@ class Summary is export(:collectors) does Base {
             take ('_sum', (), $!sum);
             take ('_created', (), $.created-posix);
         }
-    }
-}
-
-multi trait_mod:<is>(Routine $r, Summary :$timed!) {
-    $r.wrap: sub (|c) {
-        my $ will enter { $_ = now } will leave { $timed.observe(now - $_) };
-        callsame;
     }
 }
 
@@ -208,13 +185,6 @@ class Histogram is export(:collectors) does Base {
             take ('_sum', (), $.sum);
             take ('_created', (), $.created-posix);
         }
-    }
-}
-
-multi trait_mod:<is>(Routine $r, Histogram :$timed!) {
-    $r.wrap: sub (|c) {
-        my $ will enter { $_ = now } will leave { $timed.observe(now - $_) };
-        callsame;
     }
 }
 

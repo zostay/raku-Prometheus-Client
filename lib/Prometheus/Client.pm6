@@ -108,6 +108,36 @@ our sub unregister(Prometheus::Client::Metrics::Collector $c, CollectorRegistry 
     $r.unregister($c);
 }
 
+multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$timed!) {
+    $r.wrap: sub (|c) {
+        my $ will enter { $_ = now } will leave { $timed.set-duration(now - $_) };
+        callsame;
+    }
+}
+
+multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$tracked-in-progress!) {
+    $r.wrap: sub (|c) {
+        ENTER $track-inprogress.increment;
+        LEAVE $track-inprogress.decrement;
+
+        callsame;
+    }
+}
+
+multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Summary :$timed!) {
+    $r.wrap: sub (|c) {
+        my $ will enter { $_ = now } will leave { $timed.observe(now - $_) };
+        callsame;
+    }
+}
+
+multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Histogram :$timed!) {
+    $r.wrap: sub (|c) {
+        my $ will enter { $_ = now } will leave { $timed.observe(now - $_) };
+        callsame;
+    }
+}
+
 =begin pod
 
 =head1 SYNOPSIS
@@ -115,8 +145,9 @@ our sub unregister(Prometheus::Client::Metrics::Collector $c, CollectorRegistry 
     use v6;
     use Prometheus::Client :metrics;
 
+    my $timer;
     my $m = METRICS {
-        summary 'request_processing_seconds', 'Time spent processing requests';
+        $timer = summary 'request_processing_seconds', 'Time spent processing requests';
     }
 
     #| Dummy function that takes some time.
@@ -130,7 +161,7 @@ our sub unregister(Prometheus::Client::Metrics::Collector $c, CollectorRegistry 
         use Prometheus::Client::Exposition :render;
 
         my $application = route {
-            get -> 'process', $t is timed-metric($m, 'request_processing_seconds') {
+            get -> 'process', $t is timed($timer) {
                 sleep $t;
                 content 'text/plain', 'ok';
             }
@@ -378,5 +409,25 @@ This calls the C<.register> method of the current L<Prometheus::Client::Metrics:
     ) is export(:metrics)
 
 This calls the C<.unregister> method of the current L<Prometheus::Client::Metrics::CollectorRegistry> in C<$*PROMETHEUS> or the given C<$registry>.
+
+=head2 trait is timed
+
+    multi trait_mod:<is> (Routine $r, Promtheus::Client::Metrics::Gauge :$timed!)
+    multi trait_mod:<is> (Routine $r, Promtheus::Client::Metrics::Summary :$timed!)
+    multi trait_mod:<is> (Routine $r, Promtheus::Client::Metrics::Histogram :$timed!)
+
+The C<is timed> trait allows you to instrument a routine to time it. Each call to that method will update the attached metric collector. The change recorded depends on the type of metric:
+
+=item * A gauge will be set to the L<Duration> of the most recent call.
+
+=item * A summary will add an observation for each call with the sum being increased by the time and the counter being bumpted by one.
+
+=item * A histogram will add an observation to the appropriate bucket based on the duration of the call.
+
+=head2 trait is tracked-in-progress
+
+    multi trait_mod:<is> (Routine $r, Prometheus::Client::Metrics::Gauge :$tracked-in-progress!)
+
+This method will track the number of in-progress calls to the instrumented method. The gauge will be increased at the start of the call and decreased at the end.
 
 =end pod
