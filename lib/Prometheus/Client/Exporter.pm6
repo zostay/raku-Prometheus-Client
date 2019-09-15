@@ -1,10 +1,10 @@
 use v6;
 
-unit module Prometheus::Client::Collector;
+unit module Prometheus::Client::Exporter;
 
 use Prometheus::Client::Metrics :metrics;
 
-our constant Collector is export(:collectors) := Prometheus::Client::Metrics::Collector;
+our constant Collector is export(:collector) := Prometheus::Client::Metrics::Collector;
 
 our proto counter-metric(|) is export(:metrics) { * }
 multi counter-metric($name, $documentation, $value, :@labels, :$timestamp) {
@@ -165,11 +165,11 @@ multi state-set-metric(
 
 =head1 NAME
 
-Prometheus::Client::Collector - tools for building collectors
+Prometheus::Client::Exporter - tools for building exporters
 
 =head1 SYNOPSIS
 
-    use Prometheus::Client::Collector :collectors, :metrics;
+    use Prometheus::Client::Exporter :collector, :metrics;
 
     class FileSensor is Collector {
         has IO() $.gauge-file;
@@ -206,11 +206,11 @@ Prometheus::Client::Collector - tools for building collectors
 
 =head1 DESCRIPTION
 
-When you need to instrument a system using external metrics or sensors, you generally don't require a plaeholder to hold work with the values of your gauges, counters, etc. over time. Instead, you just need to quickly generate your data points for each scrape by Prometheus. This module provides convenient helpers for generating the metric results for generate these kinds of collectors.
+When you need to instrument a system using external metrics or sensors, you generally don't require a plaeholder to hold work with the values of your gauges, counters, etc. over time. Instead, you just need to quickly generate your data points for each scrape by Prometheus. This module provides convenient helpers for generating the metric results for generate these kinds of exporters.
 
 =head1 EXPORTED ROUTINES
 
-The routines are exported in two groups, C<:collectors> and C<:metrics>. The C<:collectors> group only includes an alias named C<Collector> to the L<Prometheus::Client::Metrics::Collector> class. The C<:metrics> exports all the other subroutines provided by this module.
+The routines are exported in two groups, C<:collector> and C<:metrics>. The C<:collector> group only includes an alias named C<Collector> to the L<Prometheus::Client::Metrics::Collector> class. The C<:metrics> exports all the other subroutines provided by this module.
 
 =head2 sub counter-metric
 
