@@ -324,3 +324,72 @@ class Factory does Factory {
     multi method build('stateset', |c) { StateSet.new(|c) }
 }
 
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics - module defining various tools for collecting metrics
+
+=head1 SYNOPSIS
+
+    # Most likely, you want the interface provided by:
+    #
+    # * Prometheus::Client
+    # * Prometheus::Client::Exporter
+    #
+    # However, if you want the mid- to low-level interface for some reason,
+    # here's a sample of what is provided.
+
+    use Prometheus::Client::Metrics :collectors, :metrics;
+
+    my Collector ($available, $reserved, $timing);
+    my @collectors = gather {
+        take $available = Gauge.new(
+            :name<tickets_available>,
+            :description('number of tickets remaining to be reserved'),
+        );
+
+        take Counter.new(
+            :name<tickets_reserved>,
+            :description('number of tickets to be reserved'),
+        );
+
+        take Histogram.new(
+            :name<ticket_reservations_process_seconds>,
+            :description('number of seconds spent making a ticket reservation'),
+        );
+    }
+
+    # do something custom with @collectors, I guess?
+
+=head1 DESCRIPTION
+
+This module contains the declarations for many of the internals used by the primary APIs declared in L<Prometheus::Client> and L<Prometheus::Client::Exporter>. If you are building tooling to instrument a program or export statistics, those are the interfaces you should start with. This provides some further detail internals that peek through those interfaces.
+
+This module contains the mid- and low-level tools used for working with Prometheus metrics. This includes the definitions for these classes:
+
+=item L<Prometheus::Client::Metrics::Collector>
+=item L<Prometheus::Client::Metrics::Metric>
+=item L<Prometheus::Client::Metrics::Sample>
+=item L<Prometheus::Client::Metrics::Counter>
+=item L<Prometheus::Client::Metrics::Gauge>
+=item L<Prometheus::Client::Metrics::Summary>
+=item L<Prometheus::Client::Metrics::Histogram>
+=item L<Prometheus::Client::Metrics::Info>
+=item L<Prometheus::Client::Metrics::StateSet>
+=item L<Prometheus::Client::Metrics::Group>
+=item L<Prometheus::Client::Metrics::Factory>
+
+It also defines these subsets, which help make sure that all names and labels used within the instrumentation are validated as required by the Prometheus project:
+
+=defn C<Prometheus::Client::Metrics::MetricName>
+Validates metric names, namespaces, subsystems, and units.
+
+=defn C<Prometheus::Client::Metrics::MetricLabelName>
+Validates metric label names.
+
+=defn C<Prometheus::Client::Metrics::MetricLabel>
+Validates metric label lists.
+
+=end pod
+
