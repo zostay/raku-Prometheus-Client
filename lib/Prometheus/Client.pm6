@@ -7,11 +7,11 @@ use Prometheus::Client::Metrics;
 class CollectorRegistry does Collector {
     has SetHash $!collectors;
 
-    method register(Collector:D $collector) {
+    method register(Collector $collector) {
         $!collectors{ $collector }++
     }
 
-    method unregister(Collector:D $collector) {
+    method unregister(Collector $collector) {
         $!collectors{ $collector }:delete;
     }
 
@@ -29,49 +29,83 @@ class CollectorRegistry does Collector {
 }
 
 our sub METRICS(&block) is export(:metrics) {
-    my $*METRICS = CollectorRegistry.new;
+    my $*PROMETHEUS = CollectorRegistry.new;
     block();
-    $*METRICS;
+    $*PROMETHEUS;
 }
 
 my sub _register-metric($type, :$registry, |c) {
-    my $r = $*METRICS // $registry;
+    my $r = $*PROMETHEUS // $registry;
 
     die "The registry parameter is required." without $r;
 
-    $r.register: Prometheus::Client::Metrics::Factory.build($type, |c);
+    $r.register: my $c = Prometheus::Client::Metrics::Factory.build($type, |c);
+
+    $c;
 }
 
 our proto counter(|) is export(:metrics) { * }
-multi counter(Str:D $name, Str:D $documentation) {
-    counter(:$name, :$documentation)
+multi counter($name, $documentation, |c) {
+    counter(:$name, :$documentation, |c)
 }
 multi counter(|c) {
     _register-metric('counter', |c);
 }
 
 our proto gauge(|) is export(:metrics) { * }
-multi gauge(Str:D $name, Str:D $documentation) {
-    gauge(:$name, :$documentation)
+multi gauge($name, $documentation, |c) {
+    gauge(:$name, :$documentation, |c)
 }
 multi gauge(|c) {
     _register-metric('gauge', |c);
 }
 
 our proto summary(|) is export(:metrics) { * }
-multi summary(Str:D $name, Str:D $documentation) {
-    summary(:$name, :$documentation)
+multi summary($name, $documentation, |c) {
+    summary(:$name, :$documentation, |c)
 }
 multi summary(|c) {
     _register-metric('summery', |c);
 }
 
 our proto histogram(|) is export(:metrics) { * }
-multi histogram(Str:D $name, Str:D $documentation) {
-    histogram(:$name, :$documentation)
+multi histogram($name, $documentation, |c) {
+    histogram(:$name, :$documentation, |c)
 }
 multi histogram(|c) {
     _register-metric('histogram', |c);
+}
+
+our proto info(|) is export(:metrics) { * }
+multi info($name, $documentation, |c) {
+    info(:$name, :$documentation, |c)
+}
+multi info(|c) {
+    _register-metric('info', |c);
+}
+
+our proto state-set(|) is export(:metrics) { * }
+multi state-set($name, $documentation, |c) {
+    state-set(:$name, :$documentation, |c)
+}
+multi state-set(|c) {
+    _register-metric('state-set', |c);
+}
+
+our sub register(Prometheus::Client::Metrics::Collector $c, CollectorRegistry :$registry) is export(:metrics) {
+    my $r = $*PROMETHEUS // $registry;
+
+    die "The registry parameter is required." without $r;
+
+    $r.register($c);
+}
+
+our sub unregister(Prometheus::Client::Metrics::Collector $c, CollectorRegistry :$registry) is export(:metrics) {
+    my $r = $*PROMETHEUS // $registry;
+
+    die "The registry parameter is required." without $r;
+
+    $r.unregister($c);
 }
 
 =begin pod
@@ -144,10 +178,205 @@ The second common use of the term "metric" within the instrumentation libraries 
 
 Now, in the official Prometheus client libraries, the "metrics" classes refer to metrics as collectors. The "metrics family" classes refer to metrics as measurements. In this library, you will find the interface for using metrics as collectors here with the class definitions being held by L<Prometheus::Client::Metrics>. You will find the interface for using metrics as measurements primarily within L<Prometheus::Client::Exporter> because these are primarily used to build exporters.
 
-The other word that can be somewhat confusing is the word "sample". However, the most common uses of this library should allow you to avoid running into thise confusion. However, just know if you run into a metric as a measurement with multiple samples, that doesn't mean the samples are necessarily a series of measurements of that measurement. Instead, it usually means that there are different aspects of a single measurement. For example, a summary metric will always report two samples, the count of items being reported and the running sum of items that have been reported.
+The other word that can be somewhat confusing is the word "sample". However, the most common uses of this library should allow you to avoid running into this confusion. Be aware that if you run into a metric as a measurement with multiple samples, that doesn't mean the samples are necessarily a series of measurements of that measurement. Usually multipel samples are different properties of a single measurement. For example, a summary metric will always report two samples, the count of items being reported and the running sum of items that have been reported.
 
 =head1 EXPORTED ROUTINES
 
 This module provides no exports by default. However, if you specify the C<:metrics> parameter when you import it, you will receive all the exported routines mentioned here. If not expoted, they are all defined C<OUR>-scoped, so you can use them the C<Prometheus::Client::> prefix.
+
+=head2 sub METRICS
+
+    our sub METRICS(&block --> Prometheus::Client::CollectorRegistry:D) is export(:metrics)
+
+Calling this subroutine will cause a dynamic variable named C<$*PROMETHEUS> to be defined and then the code of C<&block> to be called. If you use the other methods exported by this module to construct counters, gauges, summaries, histograms, info, and state-set metrics or the routine provided for collector registry within the C<METRICS> block, the constructed metrics will be automatically constructed and registered. The fully constructed registry is then returned by this routine.
+
+If you have custom code to run and build your metric or collector objects, you can refer directly to C<$*PROMETHEUS> as needed within the block. However, this should rarely be necessary.
+
+=head2 sub counter
+
+    our proto counter(|) is export(:metrics)
+    multi counter(Str:D $name, Str:D $documentation --> Prometheus::Client::Metrics::Counter)
+    multi counter(
+        Str:D :$name!,
+        Str:D :$namespace,
+        Str:D :$subsystem,
+        Str:D :$unit,
+        Str:D :$documentation!,
+        Str:D :@label-names,
+        Real:D :$value = 0,
+        Instant:D :$created = now,
+        Prometheus::Client::CollectorRegistry :$registry,
+        --> Prometheus::Client::Metrics::Counter
+    )
+
+Constructs a L<Prometheus::Client::Metrics::Counter> and registers with the registry in C<$*PROMETHEUS> or the given C<$registry>. The newly constructed metric collector is returned.
+
+If C<@label-names> are given, then a counter group is created instead. In which case, you code must provide values for the labels whenever providing a measurement for the metric:
+
+    my $c = counter(
+        name          => 'person_ages',
+        documentation => 'the ages of measured people',
+        label-values  => <personal_name>,
+    );
+
+    $c.labels('Bob').inc;
+    $c.labels(personal_name => 'Steve').inc;
+
+
+See L<Prometheus::Client::Metrics::Group> for details.
+
+=head2 sub gauge
+
+    our proto gauge(|) is export(:metrics)
+    multi gauge(Str:D $name, Str:D $documentation --> Prometheus::Client::Metrics::Gauge)
+    multi gauge(
+        Str:D :$name!,
+        Str:D :$namespace,
+        Str:D :$subsystem,
+        Str:D :$unit,
+        Str:D :$documentation!,
+        Str:D :@label-names,
+        Real:D :$value = 0,
+        Instant:D :$created = now,
+        Prometheus::Client::CollectorRegistry :$registry,
+        --> Prometheus::Client::Metrics::Gauge
+    )
+
+Constructs a L<Prometheus::Client::Metrics::Gauge> and registers with the registry in C<$*PROMETHEUS> or the given C<$registry>. The newly constructed metric collector is returned.
+
+If C<@label-names> are given, then a gauge group is created instead. In which case, you code must provide values for the labels whenever providing a measurement for the metric:
+
+    my $c = gauge(
+        name          => 'person_heights',
+        unit          => 'inches',
+        documentation => 'the heights of measured people',
+        label-values  => <personal_name>,
+    );
+
+    $c.labels('Bob').set(60);
+    $c.labels(personal_name => 'Steve').set(68);
+
+See L<Prometheus::Client::Metrics::Group> for details.
+
+=head2 sub summary
+
+    our proto summary(|) is export(:metrics)
+    multi summary(Str:D $name, Str:D $documentation --> Prometheus::Client::Metrics::Summary)
+    multi summary(
+        Str:D :$name!,
+        Str:D :$namespace,
+        Str:D :$subsystem,
+        Str:D :$unit,
+        Str:D :$documentation!,
+        Str:D :@label-names,
+        Real:D :$count = 0,
+        Real:D :$sum = 0,
+        Instant:D :$created = now,
+        Prometheus::Client::CollectorRegistry :$registry,
+        --> Prometheus::Client::Metrics::Summary
+    )
+
+Constructs a L<Prometheus::Client::Metrics::Summary> and registers with the registry in C<$*PROMETHEUS> or the given C<$registry>. The newly constructed metric collector is returned.
+
+If C<@label-names> are given, then a summary group is created instead. In which case, you code must provide values for the labels whenever providing a measurement for the metric:
+
+    my $c = summary(
+        name          => 'personal_visits_count',
+        documentation => 'the number of visits by particular people',
+        label-values  => <personal_name>,
+    );
+
+    $c.labels('Bob').observe(6);
+    $c.labels(personal_name => 'Steve').observe(0);
+
+See L<Prometheus::Client::Metrics::Group> for details.
+
+=head2 sub histogram
+
+    our proto histogram(|) is export(:metrics)
+    multi histogram(Str:D $name, Str:D $documentation --> Prometheus::Client::Metrics::Histogram)
+    multi histogram(
+        Str:D :$name!,
+        Str:D :$namespace,
+        Str:D :$subsystem,
+        Str:D :$unit,
+        Str:D :$documentation!,
+        Str:D :@label-names,
+        Real:D :@bucket-bounds,
+        Int:D :@buckets,
+        Real:D :$sum,
+        Instant:D :$created = now,
+        Prometheus::Client::CollectorRegistry :$registry,
+        --> Prometheus::Client::Metrics::Histogram
+    )
+
+Constructs a L<Prometheus::Client::Metrics::Histogram> and registers with the registry in C<$*PROMETHEUS> or the given C<$registry>. The newly constructed metric collector is returned.
+
+If C<@label-names> are given, then a histogram group is created instead. In which case, you code must provide values for the labels whenever providing a measurement for the metric:
+
+    my $c = histogram(
+        name          => 'personal_visits_duration',
+        bucket-bounds => (1,2,4,8,16,32,64,128,256,512,Inf),
+        documentation => 'the length of visits by particular people',
+        label-values  => <personal_name>,
+    );
+
+    $c.labels('Bob').observe(182);
+    $c.labels(personal_name => 'Steve').observe(12);
+
+See L<Prometheus::Client::Metrics::Group> for details.
+
+=head2 sub info
+
+    our proto info(|) is export(:metrics)
+    multi info(Str:D $name, Str:D $documentation --> Prometheus::Client::Metrics::Info)
+    multi info(
+        Str:D :$name!,
+        Str:D :$namespace,
+        Str:D :$subsystem,
+        Str:D :$unit,
+        Str:D :$documentation!,
+        Pair:D :@info,
+        Prometheus::Client::CollectorRegistry :$registry,
+        --> Prometheus::Client::Metrics::Info
+    )
+
+Constructs a L<Prometheus::Client::Metrics::Info> and registers with the registry in C<$*PROMETHEUS> or the given C<$registry>. The newly constructed metric collector is returned.
+
+=head2 sub state-set
+
+    our proto state-set(|) is export(:metrics)
+    multi state-set(Str:D $name, Str:D $documentation --> Prometheus::Client::Metrics::StateSet)
+    multi state-set(
+        Str:D :$name!,
+        Str:D :$namespace,
+        Str:D :$subsystem,
+        Str:D :$unit,
+        Str:D :$documentation!,
+        Str:D :@states,
+        Int:D :$state,
+        Prometheus::Client::CollectorRegistry :$registry,
+        --> Prometheus::Client::Metrics::StateSet
+    )
+
+Constructs a L<Prometheus::Client::Metrics::StateSet> and registers with the registry in C<$*PROMETHEUS> or the given C<$registry>. The newly constructed metric collector is returned.
+
+=head2 sub register
+
+    our sub register(
+        Prometheus::Client::Metrics::Collector $collector,
+        Prometheus::Client::CollectorRegistry :$registry,
+    ) is export(:metrics)
+
+This calls the C<.register> method of the current L<Prometheus::Client::Metrics::CollectorRegistry> in C<$*PROMETHEUS> or the given C<$registry>.
+
+=head2 sub unregister
+
+    our sub unregister(
+        Prometheus::Client::Metrics::Collector $collector,
+        Prometheus::Client::CollectorRegistry :$registry,
+    ) is export(:metrics)
+
+This calls the C<.unregister> method of the current L<Prometheus::Client::Metrics::CollectorRegistry> in C<$*PROMETHEUS> or the given C<$registry>.
 
 =end pod

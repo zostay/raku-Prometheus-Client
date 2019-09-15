@@ -247,14 +247,7 @@ class StateSet is export(:collectors) does Base {
     }
 }
 
-class Factory {
-    multi method build('gauge', |c) { Gauge.new(|c) }
-    multi method build('counter', |c) { Counter.new(|c) }
-    multi method build('summary', |c) { Summary.new(|c) }
-    multi method build('histogram', |c) { Histogram.new(|c) }
-    multi method build('info', |c) { Info.new(|c) }
-    multi method build('stateset', |c) { StateSet.new(|c) }
-}
+class Factory { ... }
 
 class Group is export(:collectors) does Collector does Descriptor {
     has MetricLabelName @.label-names;
@@ -316,5 +309,18 @@ class Group is export(:collectors) does Collector does Descriptor {
             }
         }
     }
+}
+
+class Factory does Factory {
+    multi method build(Str:D $type, :@label-names!, |c)  {
+        Group.new(:@label-names, :$type, |c);
+    }
+
+    multi method build('gauge', |c) { Gauge.new(|c) }
+    multi method build('counter', |c) { Counter.new(|c) }
+    multi method build('summary', |c) { Summary.new(|c) }
+    multi method build('histogram', |c) { Histogram.new(|c) }
+    multi method build('info', |c) { Info.new(|c) }
+    multi method build('stateset', |c) { StateSet.new(|c) }
 }
 
