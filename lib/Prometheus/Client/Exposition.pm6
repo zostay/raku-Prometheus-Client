@@ -4,7 +4,9 @@ unit class Prometheus::Client::Exposition;
 
 use Prometheus::Client::Metrics :metrics, :collectors;
 
-has Collector:D $collector;
+my constant Sample := Prometheus::Client::Metrics::Sample;
+
+has Collector $collector is required;
 
 method render-meta(Metric:D $metric --> Str:D) {
     qq:to/END_OF_META/;
@@ -18,7 +20,7 @@ method render-meta(Metric:D $metric --> Str:D) {
 # the time being.
 method render-value(Real:D $v --> Str:D) { " $v" }
 
-method render-timestampe(Sample:D $sample --> Str:D) {
+method render-timestamp(Sample:D $sample --> Str:D) {
     with $sample.timestamp {
         " {floor(.timestamp.to-posix.[0] * 1000)}"
     }
