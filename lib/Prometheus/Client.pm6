@@ -1,6 +1,6 @@
 use v6;
 
-unit module Prometheus::Client;
+unit module Prometheus::Client:auth<github:zostay>:ver<0.0.0>;
 
 use Prometheus::Client::Metrics :collectors;
 
@@ -170,6 +170,10 @@ multi trait_mod:<is>(Routine $r, :$tracked-in-progress!) {
 }
 
 =begin pod
+
+=head1 NAME
+
+Prometheus::Client - Prometheus instrumentation client for Perl 6
 
 =head1 SYNOPSIS
 
