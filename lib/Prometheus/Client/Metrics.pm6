@@ -65,7 +65,7 @@ role Descriptor {
 role Base does Collector does Descriptor {
     has Instant $.created = now;
 
-    method created-posix(--> Real:D) { $.created.to-posix.[0] }
+    method created-posix(--> Real:D) { floor $.created.to-posix.[0] }
 
     method describe(--> Seq:D) {
         gather { take self.get-metric }
@@ -73,7 +73,11 @@ role Base does Collector does Descriptor {
 
     method collect(--> Seq:D) {
         gather {
-            my $metric = self!new-metric;
+            my $metric = Metric.new(
+                name          => $.full-name,
+                documentation => $.documentation,
+                type          => $.type,
+            );
 
             for self.samples -> ($suffix, @labels, $value) {
                 my $name = $.name ~ $suffix;

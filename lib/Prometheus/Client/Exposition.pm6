@@ -6,10 +6,10 @@ use Prometheus::Client::Metrics :metrics, :collectors;
 
 my constant Sample := Prometheus::Client::Metrics::Sample;
 
-has Collector $collector is required;
+has Collector $.collector is required;
 
 method render-meta(Metric:D $metric --> Str:D) {
-    qq:to/END_OF_META/;
+    qq:to/END_OF_META/.trim-trailing;
     # HELP $metric.name() $metric.documentation()
     # TYPE $metric.name() $metric.type()
     END_OF_META
@@ -18,7 +18,7 @@ method render-meta(Metric:D $metric --> Str:D) {
 # Perl Real numbers ought to work with Go's ParseFloat. About the only thing
 # we need to beware of is FatRat. I'm pretending that's not an issue for
 # the time being.
-method render-value(Real:D $v --> Str:D) { " $v" }
+method render-value(Sample:D $sample --> Str:D) { " $sample.value()" }
 
 method render-timestamp(Sample:D $sample --> Str:D) {
     with $sample.timestamp {
@@ -34,6 +34,7 @@ method escape-value(Str:D $s --> Str:D) {
 }
 
 method render-labels(Sample:D $sample --> Str:D) {
+    return '' unless $sample.labels;
     '{' ~
         $sample.labels.map(-> $k, $v { qq[$k="{self.escape-value($v)}"] }).join(',')
     ~ '}'
@@ -59,7 +60,7 @@ method render-metric(Metric:D $metric --> Str:D) {
 }
 
 method render(--> Str:D) {
-    [~] $collector.collect.map: -> $metric {
+    [~] $.collector.collect.map: -> $metric {
         self.render-metric($metric)
     }
 }
