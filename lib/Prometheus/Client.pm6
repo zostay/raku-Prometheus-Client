@@ -34,62 +34,62 @@ our sub METRICS(&block) is export(:metrics) {
     $*PROMETHEUS;
 }
 
-my sub _register-metric($type, :$registry, |c) {
+my sub _register-metric($type, :$registry, *%args) {
     my $r = $*PROMETHEUS // $registry;
 
     die "The registry parameter is required." without $r;
 
-    $r.register: my $c = Prometheus::Client::Metrics::Factory.build($type, |c);
+    $r.register: my $c = Prometheus::Client::Metrics::Factory.build($type, |%args);
 
     $c;
 }
 
 our proto counter(|) is export(:metrics) { * }
-multi counter($name, $documentation, |c) {
-    counter(:$name, :$documentation, |c)
+multi counter($name, $documentation, *%args) {
+    counter(:$name, :$documentation, |%args)
 }
-multi counter(|c) {
-    _register-metric('counter', |c);
+multi counter(*%args) {
+    _register-metric('counter', |%args);
 }
 
 our proto gauge(|) is export(:metrics) { * }
-multi gauge($name, $documentation, |c) {
-    gauge(:$name, :$documentation, |c)
+multi gauge($name, $documentation, *%args) {
+    gauge(:$name, :$documentation, |%args)
 }
-multi gauge(|c) {
-    _register-metric('gauge', |c);
+multi gauge(*%args) {
+    _register-metric('gauge', |%args);
 }
 
 our proto summary(|) is export(:metrics) { * }
-multi summary($name, $documentation, |c) {
-    summary(:$name, :$documentation, |c)
+multi summary($name, $documentation, *%args) {
+    summary(:$name, :$documentation, |%args)
 }
-multi summary(|c) {
-    _register-metric('summery', |c);
+multi summary(*%args) {
+    _register-metric('summary', |%args);
 }
 
 our proto histogram(|) is export(:metrics) { * }
-multi histogram($name, $documentation, |c) {
-    histogram(:$name, :$documentation, |c)
+multi histogram($name, $documentation, *%args) {
+    histogram(:$name, :$documentation, |%args)
 }
-multi histogram(|c) {
-    _register-metric('histogram', |c);
+multi histogram(*%args) {
+    _register-metric('histogram', |%args);
 }
 
 our proto info(|) is export(:metrics) { * }
-multi info($name, $documentation, |c) {
-    info(:$name, :$documentation, |c)
+multi info($name, $documentation, *%args) {
+    info(:$name, :$documentation, |%args)
 }
-multi info(|c) {
-    _register-metric('info', |c);
+multi info(*%args) {
+    _register-metric('info', |%args);
 }
 
 our proto state-set(|) is export(:metrics) { * }
-multi state-set($name, $documentation, |c) {
-    state-set(:$name, :$documentation, |c)
+multi state-set($name, $documentation, *%args) {
+    state-set(:$name, :$documentation, |%args)
 }
-multi state-set(|c) {
-    _register-metric('state-set', |c);
+multi state-set(*%args) {
+    _register-metric('state-set', |%args);
 }
 
 our sub register(Prometheus::Client::Metrics::Collector $c, CollectorRegistry :$registry) is export(:metrics) {
