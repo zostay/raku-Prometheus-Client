@@ -374,5 +374,11 @@ Validates metric label names.
 =defn C<Prometheus::Client::Metrics::MetricLabel>
 Validates metric label lists.
 
+=head1 THREAD SAFETY AND CAVEATS
+
+All operations in the metric collectors defined in this module should be thread safe. The implementation as of this writing is built using atomic operations on Scalars, which are built on top of the built-in C<cas> (compare and swap) function of Perl 6.
+
+However, it should be noted that the safety is built in such a way that will prevent corrupted values, but in the case of summaries and histograms where there are multiple values to update, it is possible to collect the samples for a metric while a change is still being applied. This means, some buckets in a histogram could have an extra sample of data that hasn't been recorded for all yet.
+
 =end pod
 
