@@ -6,7 +6,6 @@ install:
   - sudo apt-get install libhidapi-dev
   - rakudobrew build-zef
   - zef install --depsonly .
-  - zef build .
 script:
   - prove -v -e "perl6 --ll-exception -Ilib" t
 after_success:
