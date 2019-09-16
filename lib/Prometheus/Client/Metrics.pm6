@@ -2,10 +2,9 @@ use v6;
 
 unit module Prometheus::Client::Metrics;
 
-enum MetricType <
-    Counter Gauge Summary Histogram
-    GaugeHistogram Untyped Info StateSet
->;
+subset MetricType is export(:metrics) of Str where
+    'counter' | 'gauge' | 'summary' | 'histogram' |
+    'untyped' | 'info' | 'stateset';
 
 subset MetricName is export(:metrics) of Str where /^
     <[a..z A..Z _ :]>        # start with a letter or _ or :
@@ -18,17 +17,17 @@ $/
 subset MetricLabel is export(:metrics) of Pair where *.keys.all ~~ MetricLabelName;
 subset ReservedMetricLabelName of Str where *.starts-with('__');
 
-class Sample is export(:mtrics) {
+class Sample {
     has MetricName $.name is required;
     has MetricLabel @.labels;
-    has Real $.value;
+    has Real $.value is required;
     has Instant $.timestamp;
 }
 
 class Metric is export(:metrics) {
     has MetricName $.name is required;
     has Str $.documentation is required;
-    has MetricType $.type;
+    has MetricType $.type is required;
     has Sample @.samples;
 
     method add-sample(|c) {
@@ -353,7 +352,6 @@ This module contains the mid- and low-level tools used for working with Promethe
 
 =item L<Prometheus::Client::Metrics::Collector>
 =item L<Prometheus::Client::Metrics::Metric>
-=item L<Prometheus::Client::Metrics::Sample>
 =item L<Prometheus::Client::Metrics::Counter>
 =item L<Prometheus::Client::Metrics::Gauge>
 =item L<Prometheus::Client::Metrics::Summary>
@@ -373,6 +371,9 @@ Validates metric label names.
 
 =defn C<Prometheus::Client::Metrics::MetricLabel>
 Validates metric label lists.
+
+=defn C<Prometheus::Client::Metrics::MetricType>
+This is one of the types allowed by this instrumentation library: counter, gauge, summary, histogram, info, stateset, and untyped.
 
 =head1 THREAD SAFETY AND CAVEATS
 

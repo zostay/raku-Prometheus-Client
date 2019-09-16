@@ -1,0 +1,47 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Collector - the interface for describing and collecting metrics
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client::Exporter :collector, :metrics;
+
+    class MyCollector does Collector {
+        method collect(--> Seq:D) {
+            gather {
+                take gauge-metric(
+                    name => 'boring',
+                    documentation => 'this instrumentation is sponsored by the number',
+                    value => 7,
+                );
+            }
+        }
+    }
+
+=head1 DESCRIPTION
+
+Defines the role that must be implemented by all collectors used with this instrumentation library. The methods that must be defined are C<collect> and C<describe> and both return a L<Seq>. This makes it very easy to make use of C<gather> and C<take> to return the metrics you want to return. This is how all the built-in collectors are implemented.
+
+The objects in the sequence must be 0 or more L<Prometheus::Client::Metrics::Metric> objects with 0 or samples attached to each. Typically, though, collectors will be implemented in terms of higher level objects, usually using the helper functions declared in L<Prometheus::Client::Exporter>. Or using a collector registry as described in the documentation of L<Prometheus::Client>.
+
+=head1 METHODS
+
+=head2 method describe
+
+    method describe(--> Seq:D)
+
+This provides tooling for describing the shape of a set of metrics prior to collecting them. This is described by the Prometheus project, but has not been implemented as of this writing. A default implementation is provided that returns an empty sequence.
+
+The returned L<Seq> must iterate over 0 or more L<Prometheus::Client::Metrics::Metric> objects.
+
+=head2 method collect
+
+    method collect(--> Seq:D)
+
+This is the primary method that must be implemented by all collectors for instrumenting or exporting your metrics.
+
+The returned L<Seq> must iterate over 0 or more L<Prometheus::Client::Metrics::Metric> objects. For metrics objects that are predefined for each type of metric, you should look at L<Prometheus::Client::Exporter> which provides helper tools for building these.
+
+=end pod

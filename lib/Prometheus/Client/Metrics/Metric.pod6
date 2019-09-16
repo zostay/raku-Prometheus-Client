@@ -1,0 +1,98 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Metric - low-level description of a metric
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client::Exporter :collector, :metrics;
+    use Prometheus::Client::Metrics :metrics;
+
+    class MyCollector does Collector {
+        method collect(--> Seq:D) {
+            gather {
+                my $m = Metric.new(
+                    name => 'boring',
+                    documentation => 'this instrumentation is sponsored by the number',
+                    type => 'gauge',
+                );
+
+                $m.add-sample:
+                    name => 'boring',
+                    value => 7,
+                    ;
+
+                take $m;
+            }
+        }
+    }
+
+=head1 DESCRIPTION
+
+Exported as C<Metric> when you:
+
+    use Prometheus::Client::Metrics :metrics;
+
+This is the low-level interface to returning metrics from a C<collect> method. Normally, the constructor functions in L<Prometheus::Client::Exporter> are easier to use, but you can work with the Metric class directly if you have some need for it.
+
+=head1 METHODS
+
+=head2 method new
+
+    method new(
+        MetricName: :$name!,
+        Str:D :$documentation!,
+        MetricType:D :$type!,
+    )
+
+Creates a metric object for holding 0 or more samples.
+
+=head2 method name
+
+    method name(--> MetricName:D)
+
+Returns the name of the metric, used for generating the C<# HELP> and C<# TYPE> information.
+
+=head2 method documentation
+
+    method documentation(--> Str:D)
+
+Returns the help documentation for the metric, used for generating the C<# HELP> information.
+
+=head2 method type
+
+    method type(--> MetricType:D)
+
+Returns the type for the metric, used for generating the C<# TYPE> information.
+
+=head2 method add-sample
+
+    method add-sample(
+        MetricName:D :$name!,
+        Real:D :$value!,
+        MetricLabel :@labels,
+        Instant :$timestamp,
+    )
+
+Adds a sample to the metric. Every sample must include a name and a value. The name is unchecked, but should start with the same string as returned by L<method name>.
+
+For example, a summary metric might be built as follows with two samples:
+
+    my $m = Metric.new:
+        name => 'some_stat',
+        documentation => 'a summary of something',
+        type => 'summary',
+        ;
+
+    $m.add-sample:
+        name => 'some_stat_count',
+        value => 12,
+        ;
+
+    $m.add-sample:
+        name => 'some_stat_sum',
+        value => 14.4,
+        ;
+
+=end pod

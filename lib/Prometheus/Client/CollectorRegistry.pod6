@@ -1,0 +1,45 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::CollectorRegistry - a registry of collectors
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client;
+    use Prometheus::Client::Metrics;
+
+    my $c = Prometheus::Client::CollectorRegistry.new;
+    $c.register(MyApp::Exporter.new);
+
+    my $foo-counter = Prometheus::Client::Metrics::Counter.new(
+        name          => 'foo',
+        documentation => 'count the foos',
+    );
+    $c.register($foo-counter);
+
+    react {
+        whenever Supply.interval(3) -> $foo {
+            $foo-counter.inc($foo);
+        }
+    }
+
+=head1 DESCRIPTION
+
+An object of this type is returned by C<sub METRICS>, which is the way this module encourages developers to build collector registries. However, if you prefer, you can construct this object yourself and call the C<.register> and C<.unregister> methods on it to register collectors to attach and detach from the registry. The registry is itself a collector and implements the methods of L<Prometheus::Client::Metrics::Collector> to describe and export from all collectors that have been registered.
+
+=head1 METHODS
+
+=head2 method register
+
+    method register(Prometheus::Client::Metrics::Collector:D $collector)
+
+Registers a collector with the registry.
+
+=head2 method unregister
+
+    method unregister(Prometheus::Client::Metrics::Collector:D $collector)
+
+Unregisters a collector from the registry.
+
+=end pod
