@@ -1,6 +1,6 @@
 use v6;
 
-unit module Prometheus::Client:auth<github:zostay>:ver<0.0.0>;
+unit module Prometheus::Client:auth<github:zostay>:ver<0.0.1>;
 
 use Prometheus::Client::Metrics :collectors;
 
