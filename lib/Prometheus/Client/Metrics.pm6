@@ -119,6 +119,9 @@ class Gauge is export(:collectors) does Base {
     method set(Real $amount) {
         atomic-assign($!value, $amount);
     }
+    method observe(Real $amount) {
+        atomic-assign($!value, $amount);
+    }
     method set-to-current-time() {
         atomic-assign($!value, now.to-posix.[0]);
     }

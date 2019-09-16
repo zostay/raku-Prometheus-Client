@@ -34,12 +34,28 @@ our sub METRICS(&block) is export(:metrics) {
     $*PROMETHEUS;
 }
 
+my @instruments = <timed tracked-in-progress>;
 my sub _register-metric($type, :$registry, *%args) {
     my $r = $*PROMETHEUS // $registry;
 
     die "The registry parameter is required." without $r;
 
     $r.register: my $c = Prometheus::Client::Metrics::Factory.build($type, |%args);
+
+    my Bool $instrumented = False;
+    for @instruments -> $instrument {
+        if %args{ $instrument } ~~ Callable {
+
+            # Making a single metric handling timing and tracked-inprogress
+            # would not work.
+            if ($instrumented) {
+                die "Failed to attach $c.full-name() to instrumentation: A metric can only instrument a single property at a time. Yet, this metric tries to instrument the following: { (%args.keys ∩ @instruments).join(', ') }";
+            }
+
+            %args{ $instrument }.assign-metric($instrument, $c);
+            $instrumented++;
+        }
+    }
 
     $c;
 }
@@ -108,36 +124,47 @@ our sub unregister(Prometheus::Client::Metrics::Collector $c, CollectorRegistry 
     $r.unregister($c);
 }
 
-multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$timed!) {
+package Instrument {
+    role Timed {
+        has Collector $.timer;
+
+        multi method assign-metric('timed', Collector:D $timer) {
+            $!timer = $timer;
+        }
+
+        method observe(Duration $time) {
+            .observe($time) with $!timer;
+        }
+    }
+
+    role TrackInProgress {
+        has Collector $.track-inprogress;
+
+        multi method assign-metric('tracked-in-progress', Collector:D $track-inprogress) {
+            $!track-inprogress = $track-inprogress;
+        }
+
+        method start() { .inc with $!track-inprogress }
+        method stop() { .dec with $!track-inprogress }
+    }
+}
+
+multi trait_mod:<is>(Routine $r, :$timed!) is export(:instrument) {
+    $r does Prometheus::Client::Instrument::Timed;
+
     $r.wrap: sub (|c) {
         ENTER my $start = now;
-        LEAVE $timed.set-duration(now - $start);
-
+        LEAVE $r.observe(now - $start);
         callsame;
     }
 }
 
-multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$track-inprogress!) {
-    $r.wrap: sub (|c) {
-        ENTER $track-inprogress.increment;
-        LEAVE $track-inprogress.decrement;
+multi trait_mod:<is>(Routine $r, :$tracked-in-progress!) {
+    $r does Prometheus::Client::Instrument::TrackInProgress;
 
-        callsame;
-    }
-}
-
-multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Summary :$timed!) {
     $r.wrap: sub (|c) {
-        ENTER my $start = now;
-        LEAVE $timed.observe(now - $start);
-        callsame;
-    }
-}
-
-multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Histogram :$timed!) {
-    $r.wrap: sub (|c) {
-        ENTER my $start = now;
-        LEAVE $timed.observe(now - $start);
+        ENTER $r.start;
+        LEAVE $r.stop;
         callsame;
     }
 }
@@ -149,14 +176,16 @@ multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Histogram :$timed!
     use v6;
     use Prometheus::Client :metrics;
 
-    my $timer;
-    my $m = METRICS {
-        $timer = summary 'request_processing_seconds', 'Time spent processing requests';
+    #| A function that takes some time.
+    sub process-request($t) is timed {
+        sleep $t;
     }
 
-    #| Dummy function that takes some time.
-    sub process-request($t) is timed($m<request_processing_seconds>) {
-        sleep $t;
+    my $m = METRICS {
+        summary
+            'request_processing_seconds',
+            'Time spent processing requests',
+            timed => &process-request;
     }
 
     sub MAIN() {
@@ -218,6 +247,8 @@ The other word that can be somewhat confusing is the word "sample". However, the
 =head1 EXPORTED ROUTINES
 
 This module provides no exports by default. However, if you specify the C<:metrics> parameter when you import it, you will receive all the exported routines mentioned here. If not expoted, they are all defined C<OUR>-scoped, so you can use them the C<Prometheus::Client::> prefix.
+
+You can also supply the C<:instrument> parameter during import. This will cause the C<is timed> and C<is tracked-in-progress> traits to be exported.
 
 =head2 sub METRICS
 
@@ -416,9 +447,7 @@ This calls the C<.unregister> method of the current L<Prometheus::Client::Metric
 
 =head2 trait is timed
 
-    multi trait_mod:<is> (Routine $r, Promtheus::Client::Metrics::Gauge :$timed!)
-    multi trait_mod:<is> (Routine $r, Promtheus::Client::Metrics::Summary :$timed!)
-    multi trait_mod:<is> (Routine $r, Promtheus::Client::Metrics::Histogram :$timed!)
+    multi trait_mod:<is> (Routine $r, :$timed!) is export(:instrument)
 
 The C<is timed> trait allows you to instrument a routine to time it. Each call to that method will update the attached metric collector. The change recorded depends on the type of metric:
 
@@ -428,9 +457,9 @@ The C<is timed> trait allows you to instrument a routine to time it. Each call t
 
 =item * A histogram will add an observation to the appropriate bucket based on the duration of the call.
 
-=head2 trait is track-inprogress
+=head2 trait is tracked-in-progress
 
-    multi trait_mod:<is> (Routine $r, Prometheus::Client::Metrics::Gauge :$track-inprogress!)
+    multi trait_mod:<is> (Routine $r, :$tracked-in-progress!) is export(:instrument)
 
 This method will track the number of in-progress calls to the instrumented method. The gauge will be increased at the start of the call and decreased at the end.
 
