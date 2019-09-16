@@ -363,7 +363,6 @@ This module contains the mid- and low-level tools used for working with Promethe
 =item L<Prometheus::Client::Metrics::Info>
 =item L<Prometheus::Client::Metrics::StateSet>
 =item L<Prometheus::Client::Metrics::Group>
-=item L<Prometheus::Client::Metrics::Factory>
 
 It also defines these subsets, which help make sure that all names and labels used within the instrumentation are validated as required by the Prometheus project:
 
