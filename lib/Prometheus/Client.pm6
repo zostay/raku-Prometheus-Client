@@ -2,7 +2,7 @@ use v6;
 
 unit module Prometheus::Client;
 
-use Prometheus::Client::Metrics;
+use Prometheus::Client::Metrics :collectors;
 
 class CollectorRegistry does Collector {
     has SetHash $!collectors;
@@ -110,12 +110,14 @@ our sub unregister(Prometheus::Client::Metrics::Collector $c, CollectorRegistry 
 
 multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$timed!) {
     $r.wrap: sub (|c) {
-        my $ will enter { $_ = now } will leave { $timed.set-duration(now - $_) };
+        ENTER my $start = now;
+        LEAVE $timed.set-duration(now - $start);
+
         callsame;
     }
 }
 
-multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$tracked-in-progress!) {
+multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$track-inprogress!) {
     $r.wrap: sub (|c) {
         ENTER $track-inprogress.increment;
         LEAVE $track-inprogress.decrement;
@@ -126,14 +128,16 @@ multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Gauge :$tracked-in
 
 multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Summary :$timed!) {
     $r.wrap: sub (|c) {
-        my $ will enter { $_ = now } will leave { $timed.observe(now - $_) };
+        ENTER my $start = now;
+        LEAVE $timed.observe(now - $start);
         callsame;
     }
 }
 
 multi trait_mod:<is>(Routine $r, Prometheus::Client::Metrics::Histogram :$timed!) {
     $r.wrap: sub (|c) {
-        my $ will enter { $_ = now } will leave { $timed.observe(now - $_) };
+        ENTER my $start = now;
+        LEAVE $timed.observe(now - $start);
         callsame;
     }
 }
@@ -424,9 +428,9 @@ The C<is timed> trait allows you to instrument a routine to time it. Each call t
 
 =item * A histogram will add an observation to the appropriate bucket based on the duration of the call.
 
-=head2 trait is tracked-in-progress
+=head2 trait is track-inprogress
 
-    multi trait_mod:<is> (Routine $r, Prometheus::Client::Metrics::Gauge :$tracked-in-progress!)
+    multi trait_mod:<is> (Routine $r, Prometheus::Client::Metrics::Gauge :$track-inprogress!)
 
 This method will track the number of in-progress calls to the instrumented method. The gauge will be increased at the start of the call and decreased at the end.
 

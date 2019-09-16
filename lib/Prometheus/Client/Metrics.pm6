@@ -13,7 +13,7 @@ $/;
 subset MetricLabelName is export(:metrics) of Str where /^
     <[a..z A..Z _]>       # start with letter or _
     <[a..z A..Z 0..9 _]>* # contineu with letter or digit or _
-$/
+$/;
 subset MetricLabel is export(:metrics) of Pair where *.keys.all ~~ MetricLabelName;
 subset ReservedMetricLabelName of Str where *.starts-with('__');
 
@@ -92,11 +92,11 @@ class Counter is export(:collectors) does Base {
 
     method type(--> Str:D) { 'counter' }
 
-    method inc(Real $amount = 1 where * >= 0) {
+    method inc(Real $amount where * >= 0 = 1) {
         cas $!value, -> $value { $value + $amount }
     }
 
-    method sample(--> Seq:D) {
+    method samples(--> Seq:D) {
         gather {
             take ('_total', (), $!value);
             take ('_created', (), $.created-posix);
@@ -120,7 +120,7 @@ class Gauge is export(:collectors) does Base {
         atomic-assign($!value, $amount);
     }
     method set-to-current-time() {
-        atomic-assign($!value, $time.to-posix.[0]);
+        atomic-assign($!value, now.to-posix.[0]);
     }
     method set-duration(Duration $duration) {
         atomic-assign($!value, $duration);
@@ -166,7 +166,7 @@ class Histogram is export(:collectors) does Base {
     submethod TWEAK {
         die 'bucket-bounds are not in sorted order'
             unless @!bucket-bounds.sort eqv @!bucket-bounds;
-            :
+
         die 'bucket-bounds are required'
             unless @!bucket-bounds;
 
@@ -286,8 +286,8 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     method collect(--> Seq:D) {
         gather {
-            for %!metrics.kv -> @labels, $metric {
-                for $metrics.collect -> $metric {
+            for %!metrics.kv -> @labels, $collector {
+                for $collector.collect -> $metric {
                     for $metric.samples -> $sample {
                         push $sample.labels, @labels;
                     }
@@ -299,7 +299,7 @@ class Group is export(:collectors) does Collector does Descriptor {
     }
 }
 
-class Factory does Factory {
+class Factory {
     multi method build(Str:D $type, :@label-names!, |c)  {
         Group.new(:@label-names, :$type, |c);
     }

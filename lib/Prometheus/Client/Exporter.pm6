@@ -43,7 +43,7 @@ multi gauge-metric(
 
 our proto summary-metric(|) is export(:metrics) { * }
 multi summary-metric($name, $documentation, :$count!, :$sum!, :@labels, :$timestamp) {
-    summary-metric(:$name, :$documentaiton, :$count, :$sum, :@labels, :$timestamp);
+    summary-metric(:$name, :$documentation, :$count, :$sum, :@labels, :$timestamp);
 }
 
 multi summary-metric(
@@ -74,7 +74,7 @@ multi histogram-metric($name, $documentation, :@buckets!, :$sum!, :@labels, :$ti
 }
 
 multi histogram-metric(
-    MetricName:D :$name!
+    MetricName:D :$name!,
     Str:D :$documentation!,
     Pair:D :@buckets,
     Real:D :$sum,
@@ -86,7 +86,7 @@ multi histogram-metric(
         my Real:D $le    = $bucket.key;
         my Real:D $count = $bucket.value;
 
-        $m.add-sample(
+        $m.add-sample:
             name   => $name ~ '_bucket',
             value  => $count,
             labels => (
@@ -94,20 +94,20 @@ multi histogram-metric(
                 'le' => $le,
             ).flat,
             :$timestamp,
-        );
+            ;
     }
 
-    $m.add-sample(
-        :name($name ~ '_count',
+    $m.add-sample:
+        :name($name ~ '_count'),
         :value(@buckets.elems),
         :@labels, :$timestamp,
-    );
+        ;
 
-    $m.add-sample(
-        :name($name ~ '_sum',
+    $m.add-sample:
+        :name($name ~ '_sum'),
         :value($sum),
         :@labels, :$timestamp,
-    );
+        ;
 
     $m;
 }
@@ -136,7 +136,7 @@ multi info-metric(
 }
 
 our proto state-set-metric(|) is export(:metrics) { * }
-multi state-set-metric($name, $documentation, %states, :@labels, :$timestamp) {
+multi state-set-metric($name, $documentation, @states, :@labels, :$timestamp) {
     state-set-metric(:$name, :$documentation, :@states, :@labels, :$timestamp);
 }
 
