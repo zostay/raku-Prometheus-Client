@@ -1,0 +1,69 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Info - a collector for synthetic info metrics
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client :metrics;
+
+    my $m = METRICS {
+        info 'system_info', 'basic system information',
+            info => (
+                version => '1.2.3',
+                os      => 'linux',
+                fun     => 'not too much',
+            ),
+            ;
+    }
+
+=head1 DESCRIPTION
+
+An object of this class provides a collector that returns a single info metric. Info metrics are synthetic metric, in that it returns a gauge that always has the value of 1. The info encodes everything else as static labels.
+
+=head1 METHODS
+
+=head2 method new
+
+    method new(
+        MetricName:D :$name!,
+        MetricName :$namespace,
+        MetricName :$subsystem,
+        MetricName :$unit,
+        Str:D :$documentation!,
+        MetricLabel :@info,
+        --> Prometheus::Client::Metrics::Info:D
+    )
+
+Returns a new info metric collector. The C<$name> and C<$documentation> are required.
+
+=head2 method full-name
+
+    method full-name(--> MetricName:D)
+
+This returns the full name of the metric. If all name parts are provided, this will be formatted as:
+
+    "namespace_subsystem_name_unit"
+
+Omitted parts will be left out.
+
+=head2 method type
+
+    method type(--> MetricType:D)
+
+Always returned "info".
+
+=head2 method describe
+
+    method describe(--> Seq:D)
+
+Returns a sequence of metrics with no samples attached.
+
+=head2 method collect
+
+    method collect(--> Seq:D)
+
+Returns a sequence of metrics with samples for collection.
+
+=end pod

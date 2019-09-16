@@ -59,7 +59,7 @@ role Descriptor {
         });
     }
 
-    method type(--> Str:D) { ... }
+    method type(--> MetricType:D) { ... }
 }
 
 role Base does Collector does Descriptor {
@@ -116,7 +116,7 @@ class Gauge is export(:collectors) does Base {
     method dec(Real $amount = 1) {
         cas $!value, -> $value { $value - $amount }
     }
-    method set(Real $amount is required) {
+    method set(Real $amount) {
         atomic-assign($!value, $amount);
     }
     method set-to-current-time() {

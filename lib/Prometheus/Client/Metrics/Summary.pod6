@@ -1,0 +1,78 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Summary - a collector for summary metrics
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client :metrics;
+
+    my $summary;
+    my $m = METRICS {
+        $summary = summary 'fan_speed', 'Fan speed';
+    }
+
+    start {
+        loop {
+            $summary.observe: get-fan-speed();
+            sleep 1;
+        }
+    }
+
+=head1 DESCRIPTION
+
+An object of this class provides a collector that returns a single summary metric, which includes two samples on each collection.
+
+=head1 METHODS
+
+=head2 method new
+
+    method new(
+        MetricName:D :$name!,
+        MetricName :$namespace,
+        MetricName :$subsystem,
+        MetricName :$unit,
+        Str:D :$documentation!,
+        Real :$count = 0,
+        Real :$sum = 0,
+        --> Prometheus::Client::Metrics::Summary:D
+    )
+
+Returns a new summary metric collector. The C<$name> and C<$documentation> are required.
+
+=head2 method observe
+
+    method observe(Real $amount)
+
+Increments the summary count by one and adds teh given C<$amount> to the running total in sum. This operation is thread-safe.
+
+=head2 method full-name
+
+    method full-name(--> MetricName:D)
+
+This returns the full name of the metric. If all name parts are provided, this will be formatted as:
+
+    "namespace_subsystem_name_unit"
+
+Omitted parts will be left out.
+
+=head2 method type
+
+    method type(--> MetricType:D)
+
+Always returned "summary".
+
+=head2 method describe
+
+    method describe(--> Seq:D)
+
+Returns a sequence of metrics with no samples attached.
+
+=head2 method collect
+
+    method collect(--> Seq:D)
+
+Returns a sequence of metrics with samples for collection.
+
+=end pod

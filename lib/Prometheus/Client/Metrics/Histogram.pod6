@@ -1,0 +1,78 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Histogram - a collector for histogram metrics
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client :metrics;
+
+    my $histogram;
+    my $m = METRICS {
+        $histogram = histogram 'song_length', 'Length of song';
+    }
+
+    start {
+        for @songs {
+            $histogram.observe: .seconds;
+        }
+    }
+
+=head1 DESCRIPTION
+
+An object of this class provides a collector that returns a single histogram metric, which includes multiple samples. One sample is the sum of all values and then 2 or more additional samples are recorded for each bucket's value.
+
+=head1 METHODS
+
+=head2 method new
+
+    method new(
+        MetricName:D :$name!,
+        MetricName :$namespace,
+        MetricName :$subsystem,
+        MetricName :$unit,
+        Str:D :$documentation!,
+        Real :@bucket-bounds = Prometheus::Client::Metrics::Histogram::DEFAULT-BUCKET-BOUNDS,
+        --> Prometheus::Client::Metrics::Histogram:D
+    )
+
+Returns a new histogram metric collector. The C<$name> and C<$documentation> are required.
+
+The C<@bucket-bounds> must be provided in sorted order, smallest to largest. The last item in the list should be C<Inf>, but that value may be omitted. These bounds represent the greatest value that may be put in that bucket.
+
+=head2 method observe
+
+    method observe(Real $amount)
+
+Increases the total sum by the given C<$amount> and increments the bucket that should contain this observation.
+
+=head2 method full-name
+
+    method full-name(--> MetricName:D)
+
+This returns the full name of the metric. If all name parts are provided, this will be formatted as:
+
+    "namespace_subsystem_name_unit"
+
+Omitted parts will be left out.
+
+=head2 method type
+
+    method type(--> MetricType:D)
+
+Always returned "histogram".
+
+=head2 method describe
+
+    method describe(--> Seq:D)
+
+Returns a sequence of metrics with no samples attached.
+
+=head2 method collect
+
+    method collect(--> Seq:D)
+
+Returns a sequence of metrics with samples for collection.
+
+=end pod

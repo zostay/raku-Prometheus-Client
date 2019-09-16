@@ -1,0 +1,77 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Counter - a collector for counter metrics
+
+=head1 SYNOPSIS
+
+    use Prometheus::Client :metrics;
+
+    my $counter;
+    my $m = METRICS {
+        $counter = counter 'hits', 'site hits';
+    }
+
+    start {
+        react {
+            whenever $hit { $counter.inc }
+        }
+    }
+
+=head1 DESCRIPTION
+
+An object of this class provides a collector that returns a single counter metric.
+
+=head1 METHODS
+
+=head2 method new
+
+    method new(
+        MetricName:D :$name!,
+        MetricName :$namespace,
+        MetricName :$subsystem,
+        MetricName :$unit,
+        Str:D :$documentation!,
+        Instant :$created = now,
+        Real :$value = 0,
+        --> Prometheus::Client::Metrics::Counter:D
+    )
+
+Returns a new counter metric collector. The C<$name> and C<$documentation> are required.
+
+=head2 method inc
+
+    method inc(Real $amount where * >= 0 = 1) {
+
+Increments the counter by C<$amount>. This operation is thread-safe.
+
+=head2 method full-name
+
+    method full-name(--> MetricName:D)
+
+This returns the full name of the metric. If all name parts are provided, this will be formatted as:
+
+    "namespace_subsystem_name_unit"
+
+Omitted parts will be left out.
+
+=head2 method type
+
+    method type(--> MetricType:D)
+
+Always returned "counter".
+
+=head2 method describe
+
+    method describe(--> Seq:D)
+
+Returns a sequence of metrics with no samples attached.
+
+=head2 method collect
+
+    method collect(--> Seq:D)
+
+Returns a sequence of metrics with samples for collection.
+
+=end pod
