@@ -64,7 +64,6 @@ role Descriptor {
 }
 
 role Base does Collector does Descriptor {
-    has Real $.value = 0;
     has Instant $.created = now;
 
     method created-posix(--> Real:D) { $.created.to-posix.[0] }
@@ -90,9 +89,13 @@ role Base does Collector does Descriptor {
 }
 
 class Counter is export(:collectors) does Base {
+    has Real $.value = 0;
+
     method type(--> Str:D) { 'counter' }
 
-    method inc(Real $amount = 1 where * >= 0) { $!value += $amount }
+    method inc(Real $amount = 1 where * >= 0) {
+        cas $!value, -> $value { $value + $amount }
+    }
 
     method sample(--> Seq:D) {
         gather {
@@ -108,15 +111,25 @@ class Gauge is export(:collectors) does Base {
 
     method type(--> Str:D) { 'gauge' }
 
-    method inc(Real $amount = 1) { $!value += $amount }
-    method dec(Real $amount = 1) { $!value -= $amount }
-    method set(Real $amount is required) { $!value = $amount }
-    method set-to-current-time() { $!value = $time.to-posix.[0] }
-    method set-duration(Duration $duration) { $!value = $duration }
+    method inc(Real $amount = 1) {
+        cas $!value, -> $value { $value + $amount }
+    }
+    method dec(Real $amount = 1) {
+        cas $!value, -> $value { $value - $amount }
+    }
+    method set(Real $amount is required) {
+        atomic-assign($!value, $amount);
+    }
+    method set-to-current-time() {
+        atomic-assign($!value, $time.to-posix.[0]);
+    }
+    method set-duration(Duration $duration) {
+        atomic-assign($!value, $duration);
+    }
     method set-function(&f) { &!function = &f }
 
     method samples(--> Seq:D) {
-        $!value = .() with &!function;
+        atomic-assign($!value, .()) with &!function;
 
         gather {
             take ('', (), $!value);
@@ -131,8 +144,8 @@ class Summary is export(:collectors) does Base {
     method type(--> Str:D) { 'summary' }
 
     method observe(Real:D $amount) {
-        $!count++;
-        $!sum += $amount;
+        cas $!count, -> $count { $count + 1 };
+        cas $!sum, -> $sum { $sum + $amount };
     }
 
     method samples(--> Seq:D) {
@@ -170,8 +183,8 @@ class Histogram is export(:collectors) does Base {
     method type(--> Str:D) { 'histogram' }
 
     method observe(Real $amount) {
-        $!sum += $amount;
-        @!buckets[ @!bucket-bounds.first($amount <= *, :k) ]++;
+        cas $!sum, -> $sum { $sum + $amount };
+        cas @!buckets[ @!bucket-bounds.first($amount <= *, :k) ], -> $v { $v + 1 };
     }
 
     method samples(--> Seq:D) {
@@ -207,7 +220,7 @@ class StateSet is export(:collectors) does Base {
     method type(--> Str:D) { 'stateset' }
 
     method state($state) {
-        $!state = @.states.first($state, :k);
+        atomic-assign($!state, @.states.first($state, :k));
     }
 
     method samples(--> Seq:D) {
