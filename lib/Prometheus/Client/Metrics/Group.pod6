@@ -1,0 +1,104 @@
+=begin pod
+
+=head1 NAME
+
+Prometheus::Client::Metrics::Group - manages a group of metrics differing
+
+=head1 SYNOPSIS
+
+    my $gauges;
+    my $m = METRICS {
+        $gauges = gauge 'motor_speed_rpm', 'speed of motor',
+            label-names => <printer axis>,
+            ;
+    }
+
+    start {
+        loop {
+            for <office shop school> -> $printer {
+                my %speeds = get-motor-speeds($printer);
+
+                for %speeds.kv -> $axis, $speed {
+                    $gauges.label(:$printer, :$axis).set: $speed;
+                }
+            }
+
+            sleep 1;
+        }
+    }
+
+=head1 DESCRIPTION
+
+In order to help insure that labels are used sparingly, this interface provides a clean and standardized way for generating many metrics for a given list of label names. If you set the list C<label-names> when constructing a metric collector, the object returned will will be L<Prometheus::Client::Metrics::Group> configured for that metric type. When the C<labels> method is called on the Group, a metric collector of that type will be constructed, but with the labels set.
+
+=head1 METHODS
+
+=head2 method new
+
+    method new(
+        MetricName:D :$name!,
+        MetricName :$namespace,
+        MetricName :$subsystem,
+        MetricName :$unit,
+        Str:D :$documentation!,
+        MetricLabelName:D :@label-names!,
+        MetricType:D :$type!,
+        --> Prometheus::Client::Metrics::Group:D
+    )
+
+Returns a new grouped metric collector. The C<$name>, C<$documentation>, C<@label-names>, and C<$type> are required.
+
+=head2 method labels
+
+    method labels(*@label-values, *%labels --> Prometheus::Client::Metrics::Collector:D)
+
+You may pass the label values to use as either positional parameters or as named parameters. When providing positional parameters, the label values will be paired with the label names given in that order.
+
+It is required that a value be passed for every label name provided during construction.
+
+The returned metric collector is cached inside the class, so multiple calls to labels for the same labels will return the same object.
+
+
+=head2 method remove
+
+    method remove(*@label-values, *%labels --> Prometheus::Client::Metrics::Collector)
+
+Removes the cached metric collector for the given labels from the group.
+
+=head2 method clear
+
+    method clear()
+
+Removes all cached metric collectors from the group.
+
+=head2 method full-name
+
+    method full-name(--> MetricName:D)
+
+This returns the full name of the metric. If all name parts are provided, this will be formatted as:
+
+    "namespace_subsystem_name_unit"
+
+Omitted parts will be left out.
+
+=head2 method type
+
+    method type(--> MetricType:D)
+
+Returns whatever value was set during construction.
+
+=head2 method describe
+
+    method describe(--> Seq:D)
+
+Returns a sequence of metrics with no samples attached.
+
+=head2 method collect
+
+    method collect(--> Seq:D)
+
+Returns a sequence of metrics with samples for collection.
+
+=end pod
+
+=end pod

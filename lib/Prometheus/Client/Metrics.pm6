@@ -232,11 +232,11 @@ class StateSet is export(:collectors) does Base {
 class Factory { ... }
 
 class Group is export(:collectors) does Collector does Descriptor {
-    has MetricLabelName @.label-names;
+    has MetricLabelName @.label-names is required;
 
     has %!metrics;
 
-    has Str $.type;
+    has MetricType $.type is required;
 
     has Factory $.factory = Factory.new;
 
@@ -276,7 +276,9 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     method clear() { %!metrics = %() }
 
+    # TOOD This is currently bugged and does not set the labels
     method describe(--> Seq:D) {
+        ...;
         gather {
             for %!metrics.values -> $metric {
                 take $_ for $metric.describe;
@@ -284,7 +286,9 @@ class Group is export(:collectors) does Collector does Descriptor {
         }
     }
 
+    # TOOD This is currently bugged and does not set the labels
     method collect(--> Seq:D) {
+        ...;
         gather {
             for %!metrics.values -> $metric {
                 take $_ for $metric.collect;
