@@ -276,9 +276,7 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     method clear() { %!metrics = %() }
 
-    # TOOD This is currently bugged and does not set the labels
     method describe(--> Seq:D) {
-        ...;
         gather {
             for %!metrics.values -> $metric {
                 take $_ for $metric.describe;
@@ -286,12 +284,16 @@ class Group is export(:collectors) does Collector does Descriptor {
         }
     }
 
-    # TOOD This is currently bugged and does not set the labels
     method collect(--> Seq:D) {
-        ...;
         gather {
-            for %!metrics.values -> $metric {
-                take $_ for $metric.collect;
+            for %!metrics.kv -> @labels, $metric {
+                for $metrics.collect -> $metric {
+                    for $metric.samples -> $sample {
+                        push $sample.labels, @labels;
+                    }
+
+                    take $metric;
+                }
             }
         }
     }
