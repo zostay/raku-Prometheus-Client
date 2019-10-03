@@ -178,7 +178,7 @@ Prometheus::Client - Prometheus instrumentation client for Perl 6
 =head1 SYNOPSIS
 
     use v6;
-    use Prometheus::Client :metrics;
+    use Prometheus::Client :metrics, :instrument;
 
     #| A function that takes some time.
     sub process-request($t) is timed {

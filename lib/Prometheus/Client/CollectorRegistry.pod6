@@ -28,6 +28,27 @@ Prometheus::Client::CollectorRegistry - a registry of collectors
 
 An object of this type is returned by C<sub METRICS>, which is the way this module encourages developers to build collector registries. However, if you prefer, you can construct this object yourself and call the C<.register> and C<.unregister> methods on it to register collectors to attach and detach from the registry. The registry is itself a collector and implements the methods of L<Prometheus::Client::Metrics::Collector> to describe and export from all collectors that have been registered.
 
+Please note, a collector registry is itself a collector, so you can register a registry with another registry:
+
+    # METRICS returns a collector registry
+    my $m = METRICS {
+        counter 'incidents_count', 'The number of incidents.';
+    }
+
+    my $r = Prometheus::Client::CollectorRegistry.new;
+    $r.register(
+        Prometheus::Client::Metrics::Counter.new(
+            name          => 'foo',
+            documentation => 'count the foos',
+        )
+    );
+
+    my $parent = Prometheus::Client::CollectorRegistry.new;
+    $parent.register($r);
+    $parent.register($m);
+
+When collected, C<$parent> from the example above will collect the metrics from both the other registries.
+
 =head1 METHODS
 
 =head2 method register
