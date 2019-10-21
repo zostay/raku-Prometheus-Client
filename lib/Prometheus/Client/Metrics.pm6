@@ -307,16 +307,59 @@ class Group is export(:collectors) does Collector does Descriptor {
 }
 
 class Factory {
-    multi method build(Str:D $type, :@label-names!, |c)  {
-        Group.new(:@label-names, :$type, |c);
+    multi method build('gauge', :@label-names, *%args) {
+        if @label-names {
+            Group.new(:@label-names, :type<gauge>, |%args);
+        }
+        else {
+            Gauge.new(|%args);
+        }
     }
 
-    multi method build('gauge', |c) { Gauge.new(|c) }
-    multi method build('counter', |c) { Counter.new(|c) }
-    multi method build('summary', |c) { Summary.new(|c) }
-    multi method build('histogram', |c) { Histogram.new(|c) }
-    multi method build('info', |c) { Info.new(|c) }
-    multi method build('stateset', |c) { StateSet.new(|c) }
+    multi method build('counter', :@label-names, *%args) {
+        if @label-names {
+            Group.new(:@label-names, :type<counter>, |%args);
+        }
+        else {
+            Counter.new(|%args);
+        }
+    }
+
+    multi method build('summary', :@label-names, *%args) {
+        if @label-names {
+            Group.new(:@label-names, :type<summary>, |%args);
+        }
+        else {
+            Summary.new(|%args);
+        }
+    }
+
+    multi method build('histogram', :@label-names, *%args) {
+        if @label-names {
+            Group.new(:@label-names, :type<histogram>, |%args);
+        }
+        else {
+            Histogram.new(|%args)
+        }
+    }
+
+    multi method build('info', :@label-names, *%args) {
+        if @label-names {
+            Group.new(:@label-names, :type<info>, |%args);
+        }
+        else {
+            Info.new(|%args)
+        }
+    }
+
+    multi method build('stateset', :@label-names, *%args) {
+        if @label-names {
+            Group.new(:@label-names, :type<stateset>, |%args);
+        }
+        else {
+            StateSet.new(|%args)
+        }
+    }
 }
 
 =begin pod

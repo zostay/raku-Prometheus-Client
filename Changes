@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    * Fix the internal metric factory to make sure it builds metric groups
+      correctly.
+
 v0.0.1	2019-09-16
 
     * Initial revision.
