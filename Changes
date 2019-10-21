@@ -2,6 +2,7 @@
 
     * Fix the internal metric factory to make sure it builds metric groups
       correctly.
+    * Fix the labels method of metric groups, which was completely broken.
 
 v0.0.1	2019-09-16
 

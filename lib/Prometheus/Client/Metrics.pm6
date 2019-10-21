@@ -267,7 +267,7 @@ class Group is export(:collectors) does Collector does Descriptor {
     method labels(*@label-values, *%labels --> Collector) {
         my @labels = self!make-labels(@label-values, %labels);
 
-        %!metrics[ @labels ] //= $.factory.build($.type,
+        %!metrics{ @labels } //= $.factory.build($.type,
             :$.name,
             :$.namespace,
             :$.subsystem,
