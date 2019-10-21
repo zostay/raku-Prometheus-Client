@@ -36,7 +36,7 @@ method escape-value(Str:D $s --> Str:D) {
 method render-labels(Sample:D $sample --> Str:D) {
     return '' unless $sample.labels;
     '{' ~
-        $sample.labels.map(-> $k, $v { qq[$k="{self.escape-value($v)}"] }).join(',')
+        $sample.labels.map({ qq[{.key}="{self.escape-value(.value)}"] }).join(',')
     ~ '}'
 }
 

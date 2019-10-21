@@ -14,7 +14,7 @@ subset MetricLabelName is export(:metrics) of Str where /^
     <[a..z A..Z _]>       # start with letter or _
     <[a..z A..Z 0..9 _]>* # contineu with letter or digit or _
 $/;
-subset MetricLabel is export(:metrics) of Pair where *.keys.all ~~ MetricLabelName;
+subset MetricLabel is export(:metrics) of Pair where { .key ~~ MetricLabelName };
 subset ReservedMetricLabelName of Str where *.starts-with('__');
 
 class Sample {
@@ -239,9 +239,18 @@ class StateSet is export(:collectors) does Base {
 class Factory { ... }
 
 class Group is export(:collectors) does Collector does Descriptor {
+    my class LabelsKey {
+        has @.labels;
+        method WHICH(--> ObjAt:D) {
+            ValueObjAt.new(
+                "LabelsKey|" ~ @.labels.map(*.value).join('|')
+            )
+        }
+    }
+
     has MetricLabelName @.label-names is required;
 
-    has %!metrics;
+    has Collector %!metrics{ LabelsKey };
 
     has MetricType $.type is required;
 
@@ -251,7 +260,7 @@ class Group is export(:collectors) does Collector does Descriptor {
         my @names  = @.label-names;
         my @values = @label-values;
 
-        gather for @names -> $name {
+        my @labels = gather for @names -> $name {
             if @values {
                 take $name => @values.shift;
             }
@@ -262,12 +271,14 @@ class Group is export(:collectors) does Collector does Descriptor {
                 die "label $name expected, but not given";
             }
         }
+
+        LabelsKey.new(:@labels);
     }
 
     method labels(*@label-values, *%labels --> Collector) {
-        my @labels = self!make-labels(@label-values, %labels);
+        my $labels-key = self!make-labels(@label-values, %labels);
 
-        %!metrics{ @labels } //= $.factory.build($.type,
+         %!metrics{ $labels-key } //= $.factory.build($.type,
             :$.name,
             :$.namespace,
             :$.subsystem,
@@ -277,8 +288,8 @@ class Group is export(:collectors) does Collector does Descriptor {
     }
 
     method remove(*@label-values, *%labels --> Collector) {
-        my @labels = self!make-labels(@label-values, %labels);
-        %!metrics[ @labels ]:delete;
+        my $labels-key = self!make-labels(@label-values, %labels);
+        %!metrics{ $labels-key }:delete;
     }
 
     method clear() { %!metrics = %() }
@@ -293,10 +304,10 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     method collect(--> Seq:D) {
         gather {
-            for %!metrics.kv -> @labels, $collector {
+            for %!metrics.kv -> $labels-key, $collector {
                 for $collector.collect -> $metric {
                     for $metric.samples -> $sample {
-                        push $sample.labels, @labels;
+                        append $sample.labels, $labels-key.labels;
                     }
 
                     take $metric;
@@ -307,7 +318,7 @@ class Group is export(:collectors) does Collector does Descriptor {
 }
 
 class Factory {
-    multi method build('gauge', :@label-names, *%args) {
+    multi method build('gauge', :@label-names, *%args --> Collector:D) {
         if @label-names {
             Group.new(:@label-names, :type<gauge>, |%args);
         }
@@ -316,7 +327,7 @@ class Factory {
         }
     }
 
-    multi method build('counter', :@label-names, *%args) {
+    multi method build('counter', :@label-names, *%args --> Collector:D) {
         if @label-names {
             Group.new(:@label-names, :type<counter>, |%args);
         }
@@ -325,7 +336,7 @@ class Factory {
         }
     }
 
-    multi method build('summary', :@label-names, *%args) {
+    multi method build('summary', :@label-names, *%args --> Collector:D) {
         if @label-names {
             Group.new(:@label-names, :type<summary>, |%args);
         }
@@ -334,7 +345,7 @@ class Factory {
         }
     }
 
-    multi method build('histogram', :@label-names, *%args) {
+    multi method build('histogram', :@label-names, *%args --> Collector:D) {
         if @label-names {
             Group.new(:@label-names, :type<histogram>, |%args);
         }
@@ -343,7 +354,7 @@ class Factory {
         }
     }
 
-    multi method build('info', :@label-names, *%args) {
+    multi method build('info', :@label-names, *%args --> Collector:D) {
         if @label-names {
             Group.new(:@label-names, :type<info>, |%args);
         }
@@ -352,7 +363,7 @@ class Factory {
         }
     }
 
-    multi method build('stateset', :@label-names, *%args) {
+    multi method build('stateset', :@label-names, *%args --> Collector:D) {
         if @label-names {
             Group.new(:@label-names, :type<stateset>, |%args);
         }
