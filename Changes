@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    * Fix namespaces, units, and other name related terms that were being used
+      incorrectly in samples.
+
 v0.1.0	2019-10-20
 
     * Fix the internal metric factory to make sure it builds metric groups

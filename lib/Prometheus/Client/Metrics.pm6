@@ -80,7 +80,7 @@ role Base does Collector does Descriptor {
             );
 
             for self.samples -> ($suffix, @labels, $value) {
-                my $name = $.name ~ $suffix;
+                my $name = $.full-name ~ $suffix;
                 $metric.add-sample(:$name, :@labels, :$value);
             }
 
