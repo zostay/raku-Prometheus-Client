@@ -1,55 +1,55 @@
 {
-  "build-depends": [
+  "resources": [
     
   ],
   "support": {
     "source": "git://github.com/zostay/p6-Prometheus-Client.git"
   },
-  "authors": [
-    "Sterling Hanenkamp <hanenkamp@cpan.org>"
+  "source-url": "git://github.com/zostay/p6-Prometheus-Client.git",
+  "depends": [
+    
   ],
+  "build-depends": [
+    
+  ],
+  "auth": "github:zostay",
   "name": "Prometheus::Client",
   "perl": "6.c",
   "tags": [
     
   ],
-  "auth": "github:zostay",
-  "source-url": "git://github.com/zostay/p6-Prometheus-Client.git",
+  "description": "Prometheus instrumentation client for Perl 6",
+  "version": "0.1.1",
+  "meta-version": "0",
+  "provides": {
+    "Prometheus::Client::Metrics::Sample": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Metric": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::StateSet": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Summary": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Histogram": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client": "lib/Prometheus/Client.pm6",
+    "Prometheus::Client::Metrics::Gauge": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Counter": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Exposition": "lib/Prometheus/Client/Exposition.pm6",
+    "Prometheus::Client::Exporter": "lib/Prometheus/Client/Exporter.pm6",
+    "Prometheus::Client::Instrument::Timed": "lib/Prometheus/Client.pm6",
+    "Prometheus::Client::Metrics::Group": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Collector": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Descriptor": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Metrics::Factory": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Instrument::TrackInProgress": "lib/Prometheus/Client.pm6",
+    "Prometheus::Client::Metrics::Info": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::Instrument": "lib/Prometheus/Client.pm6",
+    "Prometheus::Client::Metrics::Base": "lib/Prometheus/Client/Metrics.pm6",
+    "Prometheus::Client::CollectorRegistry": "lib/Prometheus/Client.pm6"
+  },
+  "authors": [
+    "Sterling Hanenkamp <hanenkamp@cpan.org>"
+  ],
   "test-depends": [
     "Test",
     "Test::META"
   ],
-  "depends": [
-    
-  ],
-  "resources": [
-    
-  ],
-  "version": "0.1.0",
-  "description": "Prometheus instrumentation client for Perl 6",
-  "meta-version": "0",
-  "license": "Artistic-2.0",
-  "provides": {
-    "Prometheus::Client::Instrument::TrackInProgress": "lib/Prometheus/Client.pm6",
-    "Prometheus::Client": "lib/Prometheus/Client.pm6",
-    "Prometheus::Client::Exporter": "lib/Prometheus/Client/Exporter.pm6",
-    "Prometheus::Client::Exposition": "lib/Prometheus/Client/Exposition.pm6",
-    "Prometheus::Client::Metrics::Descriptor": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Factory": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Instrument::Timed": "lib/Prometheus/Client.pm6",
-    "Prometheus::Client::Metrics::Info": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Counter": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Instrument": "lib/Prometheus/Client.pm6",
-    "Prometheus::Client::Metrics::Base": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Sample": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Histogram": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Summary": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::CollectorRegistry": "lib/Prometheus/Client.pm6",
-    "Prometheus::Client::Metrics::Collector": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Group": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::StateSet": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Gauge": "lib/Prometheus/Client/Metrics.pm6",
-    "Prometheus::Client::Metrics::Metric": "lib/Prometheus/Client/Metrics.pm6"
-  }
+  "license": "Artistic-2.0"
 }
