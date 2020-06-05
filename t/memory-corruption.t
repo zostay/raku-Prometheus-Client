@@ -1,18 +1,19 @@
 #!/usr/bin/env raku
 
+use Test;
+use Prometheus::Client :metrics;
+
+plan 1;
+
 {
     CATCH {
         default {
             skip 'cannot trigger garbage collection';
-            done-testing
             exit
         }
     }
     VM.request-garbage-collection;
 }
-
-use Test;
-use Prometheus::Client :metrics;
 
 my $THREADS = 20;
 my $ROUNDS  = 2000;
@@ -44,5 +45,4 @@ my $ROUNDS  = 2000;
 VM.request-garbage-collection;
 
 pass 'no memory corruption when adding new labels';
-done-testing
 
