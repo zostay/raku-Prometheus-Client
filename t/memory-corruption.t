@@ -1,5 +1,16 @@
 #!/usr/bin/env raku
 
+{
+    CATCH {
+        default {
+            skip 'cannot trigger garbage collection';
+            done-testing
+            exit
+        }
+    }
+    VM.request-garbage-collection;
+}
+
 use Test;
 use Prometheus::Client :metrics;
 
