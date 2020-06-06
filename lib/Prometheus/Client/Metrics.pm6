@@ -282,8 +282,9 @@ class Group is export(:collectors) does Collector does Descriptor {
         with %!metrics{ $labels-key } {
             return $_;
         }
+        my $collector;
         $!label-adding-lock.protect: {
-            return %!metrics{ $labels-key } //= $.factory.build($.type,
+            $collector = %!metrics{ $labels-key } //= $.factory.build($.type,
                 :$.name,
                 :$.namespace,
                 :$.subsystem,
@@ -291,6 +292,7 @@ class Group is export(:collectors) does Collector does Descriptor {
                 :$.documentation,
             );
         };
+        return $collector;
     }
 
     method remove(*@label-values, *%labels --> Collector) {
