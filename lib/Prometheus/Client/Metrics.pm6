@@ -238,7 +238,7 @@ class StateSet is export(:collectors) does Base {
 
 class Factory { ... }
 
-class Group is export(:collectors) does Collector does Descriptor {
+class Group is export(:collectors) does Base does Descriptor {
     my class LabelsKey {
         has @.labels;
         method WHICH(--> ObjAt:D) {
@@ -302,23 +302,11 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     method clear() { %!metrics = %() }
 
-    method describe(--> Seq:D) {
-        gather {
-            for %!metrics.values -> $metric {
-                take $_ for $metric.describe;
-            }
-        }
-    }
-
-    method collect(--> Seq:D) {
+    method samples(--> Seq:D) {
         gather {
             for %!metrics.kv -> $labels-key, $collector {
-                for $collector.collect -> $metric {
-                    for $metric.samples -> $sample {
-                        append $sample.labels, $labels-key.labels;
-                    }
-
-                    take $metric;
+                for $collector.samples -> ($suffix, @labels, $value) {
+                    take $suffix, (@labels.Slip, $labels-key.labels.Slip), $value;
                 }
             }
         }
