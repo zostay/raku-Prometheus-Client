@@ -30,8 +30,16 @@ method render-timestamp(Sample:D $sample --> Str:D) {
 }
 
 my %escape-cache;
+my Lock::Async $escape-cache-lock = Lock::Async.new;
 method escape-value(Str:D $s --> Str:D) {
-    return %escape-cache{$s} //= $s.trans([ '"', '\\', "\n" ] => [ '\\"', '\\\\', '\\n' ]);
+    with %escape-cache{$s} {
+        return $_;
+    }
+    my $escaped;
+    $escape-cache-lock.protect: {
+        $escaped =  %escape-cache{$s} = $s.trans([ '"', '\\', "\n" ] => [ '\\"', '\\\\', '\\n' ]);
+    };
+    return $escaped;
 }
 
 method render-labels(Sample:D $sample --> Str:D) {
