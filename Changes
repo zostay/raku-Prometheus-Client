@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+    * Correctly group labeled matrics in rendered output. (HT: @kbucheli)
+
 v0.2.0	2020-06-10
 
     * Fix a problem with thread-safety when using labeled metrics. (HT:
