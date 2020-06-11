@@ -238,7 +238,7 @@ class StateSet is export(:collectors) does Base {
 
 class Factory { ... }
 
-class Group is export(:collectors) does Base does Descriptor {
+class Group is export(:collectors) does Base {
     my class LabelsKey {
         has @.labels;
         method WHICH(--> ObjAt:D) {
