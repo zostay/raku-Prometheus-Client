@@ -29,8 +29,17 @@ method render-timestamp(Sample:D $sample --> Str:D) {
     }
 }
 
+my %escape-cache;
+my Lock::Async $escape-cache-lock = Lock::Async.new;
 method escape-value(Str:D $s --> Str:D) {
-    $s.trans([ '"', '\\', "\n" ] => [ '\\"', '\\\\', '\\n' ]);
+    with %escape-cache{$s} {
+        return $_;
+    }
+    my $escaped;
+    $escape-cache-lock.protect: {
+        $escaped =  %escape-cache{$s} = $s.trans([ '"', '\\', "\n" ] => [ '\\"', '\\\\', '\\n' ]);
+    };
+    return $escaped;
 }
 
 method render-labels(Sample:D $sample --> Str:D) {
@@ -41,18 +50,18 @@ method render-labels(Sample:D $sample --> Str:D) {
 }
 
 method render-sample(Sample:D $sample --> Str:D) {
-    [~] $sample.name,
+    ($sample.name,
         self.render-labels($sample),
         self.render-value($sample),
         self.render-timestamp($sample),
         "\n"
-        ;
+    ).join;
 }
 
 method render-samples(Metric:D $metric --> Str:D) {
-    [~] do for $metric.samples -> $sample {
+    $metric.samples.map( -> $sample {
         self.render-sample($sample);
-    }
+    }).join
 }
 
 method render-metric(Metric:D $metric --> Str:D) {
@@ -60,9 +69,9 @@ method render-metric(Metric:D $metric --> Str:D) {
 }
 
 method render(--> Str:D) {
-    [~] $.collector.collect.map: -> $metric {
+    $.collector.collect.map( -> $metric {
         self.render-metric($metric)
-    }
+    }).join;
 }
 
 sub render-metrics(Collector:D $collector --> Str:D) is export(:render) {
