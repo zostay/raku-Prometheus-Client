@@ -256,6 +256,8 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     has Factory $.factory = Factory.new;
 
+    has Lock::Async $!label-adding-lock = Lock::Async.new;
+
     method !make-labels(@label-values, %labels) {
         my @names  = @.label-names;
         my @values = @label-values;
@@ -277,14 +279,20 @@ class Group is export(:collectors) does Collector does Descriptor {
 
     method labels(*@label-values, *%labels --> Collector) {
         my $labels-key = self!make-labels(@label-values, %labels);
-
-         %!metrics{ $labels-key } //= $.factory.build($.type,
-            :$.name,
-            :$.namespace,
-            :$.subsystem,
-            :$.unit,
-            :$.documentation,
-        );
+        with %!metrics{ $labels-key } {
+            return $_;
+        }
+        my $collector;
+        $!label-adding-lock.protect: {
+            $collector = %!metrics{ $labels-key } //= $.factory.build($.type,
+                :$.name,
+                :$.namespace,
+                :$.subsystem,
+                :$.unit,
+                :$.documentation,
+            );
+        };
+        return $collector;
     }
 
     method remove(*@label-values, *%labels --> Collector) {
