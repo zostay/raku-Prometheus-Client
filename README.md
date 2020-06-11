@@ -69,9 +69,9 @@ Insofar as it is possible, I have tried to stick to the definitions and usages p
 
 There is a particular clarification that I need to make regarding the use of the work "metrics." Personally, I find the way Prometheus uses the words "metrics", "metrics family", and "samples" to be extremely confusing. (In fact, the word "metric" is being entirely misused by the Prometheus project. The word they actually mean is "measurement", but I digress.) Therefore, I want to take a moment here to clarify that "metric" can have basically two meanings within this module library depending on context.
 
-Pod::Defn<140523125322784>
+Pod::Defn<94832925826376>
 
-Pod::Defn<140523125326704>
+Pod::Defn<94832927447856>
 
 Now, in the official Prometheus client libraries, the "metrics" classes refer to metrics as collectors. The "metrics family" classes refer to metrics as measurements. In this library, you will find the interface for using metrics as collectors here with the class definitions being held by [Prometheus::Client::Metrics](Prometheus::Client::Metrics). You will find the interface for using metrics as measurements primarily within [Prometheus::Client::Exporter](Prometheus::Client::Exporter) because these are primarily used to build exporters.
 
