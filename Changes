@@ -1,5 +1,11 @@
 {{$NEXT}}
 
+v0.2.0	2020-06-10
+
+    * Fix a problem with thread-safety when using labeled metrics. (HT:
+      @kbucheli)
+    * Improved performance of metrics rendering. (HT: @kbucheli)
+
 v0.1.1	2019-10-21
 
     * Fix namespaces, units, and other name related terms that were being used
