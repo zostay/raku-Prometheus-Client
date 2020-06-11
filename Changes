@@ -1,4 +1,4 @@
-{{$NEXT}}
+v0.3.0	2020-06-11
 
     * Correctly group labeled matrics in rendered output. (HT: @kbucheli)
 
