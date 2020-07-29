@@ -12,7 +12,7 @@ subset MetricName is export(:metrics) of Str where /^
 $/;
 subset MetricLabelName is export(:metrics) of Str where /^
     <[a..z A..Z _]>       # start with letter or _
-    <[a..z A..Z 0..9 _]>* # contineu with letter or digit or _
+    <[a..z A..Z 0..9 _]>* # continue with letter or digit or _
 $/;
 subset MetricLabel is export(:metrics) of Pair where { .key ~~ MetricLabelName };
 subset ReservedMetricLabelName of Str where *.starts-with('__');
@@ -63,6 +63,7 @@ role Descriptor {
 }
 
 role Base does Collector does Descriptor {
+    has Bool    $.track-created = False;
     has Instant $.created = now;
 
     method created-posix(--> Real:D) { floor $.created.to-posix.[0] }
@@ -102,8 +103,8 @@ class Counter is export(:collectors) does Base {
 
     method samples(--> Seq:D) {
         gather {
-            take ('_total', (), $!value);
-            take ('_created', (), $.created-posix);
+            take ('', (), $!value);
+            take ('_created', (), $.created-posix) if $.track-created;
         }
     }
 }
@@ -158,7 +159,7 @@ class Summary is export(:collectors) does Base {
         gather {
             take ('_count', (), $!count);
             take ('_sum', (), $!sum);
-            take ('_created', (), $.created-posix);
+            take ('_created', (), $.created-posix) if $.track-created;
         }
     }
 }
@@ -202,7 +203,7 @@ class Histogram is export(:collectors) does Base {
 
             take ('_count', (), $acc);
             take ('_sum', (), $.sum);
-            take ('_created', (), $.created-posix);
+            take ('_created', (), $.created-posix) if $.track-created;
         }
     }
 }
@@ -290,6 +291,7 @@ class Group is export(:collectors) does Base {
                 :$.subsystem,
                 :$.unit,
                 :$.documentation,
+                :$.track-created,
             );
         };
         return $collector;

@@ -31,7 +31,6 @@ for 1..5 {
     # TYPE request_processing_seconds summary
     request_processing_seconds_count $_
     request_processing_seconds_sum $prev-sum
-    request_processing_seconds_created $timer.created-posix()
     END_OF_EXPECTED
 }
 
