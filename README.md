@@ -118,7 +118,7 @@ If `@label-names` are given, then a counter group is created instead. In which c
     my $c = counter(
         name          => 'person_ages',
         documentation => 'the ages of measured people',
-        label-values  => <personal_name>,
+        label-names  => <personal_name>,
     );
 
     $c.labels('Bob').inc;
@@ -152,7 +152,7 @@ If `@label-names` are given, then a gauge group is created instead. In which cas
         name          => 'person_heights',
         unit          => 'inches',
         documentation => 'the heights of measured people',
-        label-values  => <personal_name>,
+        label-names  => <personal_name>,
     );
 
     $c.labels('Bob').set(60);
@@ -186,7 +186,7 @@ If `@label-names` are given, then a summary group is created instead. In which c
     my $c = summary(
         name          => 'personal_visits_count',
         documentation => 'the number of visits by particular people',
-        label-values  => <personal_name>,
+        label-names  => <personal_name>,
     );
 
     $c.labels('Bob').observe(6);
@@ -222,7 +222,7 @@ If `@label-names` are given, then a histogram group is created instead. In which
         name          => 'personal_visits_duration',
         bucket-bounds => (1,2,4,8,16,32,64,128,256,512,Inf),
         documentation => 'the length of visits by particular people',
-        label-values  => <personal_name>,
+        label-names  => <personal_name>,
     );
 
     $c.labels('Bob').observe(182);

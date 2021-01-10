@@ -164,15 +164,14 @@ class Summary is export(:collectors) does Base {
 }
 
 class Histogram is export(:collectors) does Base {
-    constant DEFAULT-BUCKET-BOUNDS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, Inf);
 
-    has Real @.bucket-bounds = DEFAULT-BUCKET-BOUNDS;
+    has Real @.bucket-bounds = .005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, Inf;
     has Int @.buckets;
     has Real $.sum = 0;
 
     submethod TWEAK {
         die 'bucket-bounds are not in sorted order'
-            unless @!bucket-bounds.sort eqv @!bucket-bounds;
+            unless [<=] @!bucket-bounds;
 
         die 'bucket-bounds are required'
             unless @!bucket-bounds;
@@ -195,7 +194,7 @@ class Histogram is export(:collectors) does Base {
 
     method samples(--> Seq:D) {
         gather {
-            my $acc = [+] do for @!bucket-bounds Z @!buckets -> $bound, $count {
+            my $acc = [+] do for @!bucket-bounds Z @!buckets -> ($bound, $count) {
                 take ('_bucket', (le => $bound,), $count);
                 $count;
             }
@@ -258,6 +257,8 @@ class Group is export(:collectors) does Base {
 
     has Lock::Async $!label-adding-lock = Lock::Async.new;
 
+    has Real @.bucket-bounds;
+
     method !make-labels(@label-values, %labels) {
         my @names  = @.label-names;
         my @values = @label-values;
@@ -290,6 +291,7 @@ class Group is export(:collectors) does Base {
                 :$.subsystem,
                 :$.unit,
                 :$.documentation,
+                :@.bucket-bounds
             );
         };
         return $collector;
@@ -346,7 +348,7 @@ class Factory {
             Group.new(:@label-names, :type<histogram>, |%args);
         }
         else {
-            Histogram.new(|%args)
+            Histogram.new(|%args);
         }
     }
 
