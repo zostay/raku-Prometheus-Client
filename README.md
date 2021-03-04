@@ -69,9 +69,9 @@ Insofar as it is possible, I have tried to stick to the definitions and usages p
 
 There is a particular clarification that I need to make regarding the use of the work "metrics." Personally, I find the way Prometheus uses the words "metrics", "metrics family", and "samples" to be extremely confusing. (In fact, the word "metric" is being entirely misused by the Prometheus project. The word they actually mean is "measurement", but I digress.) Therefore, I want to take a moment here to clarify that "metric" can have basically two meanings within this module library depending on context.
 
-Pod::Defn<94832925826376>
+Pod::Defn<93921565996832>
 
-Pod::Defn<94832927447856>
+Pod::Defn<93921565994984>
 
 Now, in the official Prometheus client libraries, the "metrics" classes refer to metrics as collectors. The "metrics family" classes refer to metrics as measurements. In this library, you will find the interface for using metrics as collectors here with the class definitions being held by [Prometheus::Client::Metrics](Prometheus::Client::Metrics). You will find the interface for using metrics as measurements primarily within [Prometheus::Client::Exporter](Prometheus::Client::Exporter) because these are primarily used to build exporters.
 
@@ -118,7 +118,7 @@ If `@label-names` are given, then a counter group is created instead. In which c
     my $c = counter(
         name          => 'person_ages',
         documentation => 'the ages of measured people',
-        label-names  => <personal_name>,
+        label-values  => <personal_name>,
     );
 
     $c.labels('Bob').inc;
@@ -152,7 +152,7 @@ If `@label-names` are given, then a gauge group is created instead. In which cas
         name          => 'person_heights',
         unit          => 'inches',
         documentation => 'the heights of measured people',
-        label-names  => <personal_name>,
+        label-values  => <personal_name>,
     );
 
     $c.labels('Bob').set(60);
@@ -186,7 +186,7 @@ If `@label-names` are given, then a summary group is created instead. In which c
     my $c = summary(
         name          => 'personal_visits_count',
         documentation => 'the number of visits by particular people',
-        label-names  => <personal_name>,
+        label-values  => <personal_name>,
     );
 
     $c.labels('Bob').observe(6);
@@ -222,7 +222,7 @@ If `@label-names` are given, then a histogram group is created instead. In which
         name          => 'personal_visits_duration',
         bucket-bounds => (1,2,4,8,16,32,64,128,256,512,Inf),
         documentation => 'the length of visits by particular people',
-        label-names  => <personal_name>,
+        label-values  => <personal_name>,
     );
 
     $c.labels('Bob').observe(182);
