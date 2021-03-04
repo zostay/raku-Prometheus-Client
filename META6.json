@@ -1,34 +1,34 @@
 {
+  "name": "Prometheus::Client",
+  "tags": [
+  ],
   "license": "Artistic-2.0",
+  "build-depends": [
+  ],
+  "version": "0.4.0",
   "depends": [
   ],
-  "source-url": "git://github.com/zostay/p6-Prometheus-Client.git",
-  "name": "Prometheus::Client",
-  "perl": "6.c",
   "auth": "github:zostay",
-  "support": {
-    "source": "git://github.com/zostay/p6-Prometheus-Client.git"
-  },
+  "source-url": "git://github.com/zostay/p6-Prometheus-Client.git",
+  "description": "Prometheus instrumentation client for Perl 6",
   "test-depends": [
     "Test",
     "Test::META"
   ],
-  "resources": [
-  ],
-  "meta-version": "0",
-  "version": "0.2.0",
-  "build-depends": [
-  ],
-  "tags": [
-  ],
-  "description": "Prometheus instrumentation client for Perl 6",
   "provides": {
+    "Prometheus::Client": "lib/Prometheus/Client.pm6",
     "Prometheus::Client::Exporter": "lib/Prometheus/Client/Exporter.pm6",
     "Prometheus::Client::Exposition": "lib/Prometheus/Client/Exposition.pm6",
-    "Prometheus::Client": "lib/Prometheus/Client.pm6",
     "Prometheus::Client::Metrics": "lib/Prometheus/Client/Metrics.pm6"
   },
   "authors": [
     "Sterling Hanenkamp <hanenkamp@cpan.org>"
-  ]
+  ],
+  "support": {
+    "source": "git://github.com/zostay/p6-Prometheus-Client.git"
+  },
+  "resources": [
+  ],
+  "meta-version": "0",
+  "perl": "6.c"
 }
